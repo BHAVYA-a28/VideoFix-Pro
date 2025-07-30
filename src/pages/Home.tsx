@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Star, Users, Clock, Shield } from 'lucide-react';
+import SystemDiagnosticsModal from '../components/SystemDiagnosticsModal';
 
 const Home = () => {
+  const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
+
   const features = [
     {
       icon: CheckCircle,
@@ -70,13 +73,13 @@ const Home = () => {
               Resolve crashes, conflicts, and performance issues in minutes.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/dashboard"
+              <button
+                onClick={() => setIsDiagnosticsOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-all transform hover:scale-105 flex items-center justify-center"
               >
                 Start Free Diagnosis
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+              </button>
               <Link
                 to="/services"
                 className="border-2 border-blue-400 hover:bg-blue-400 hover:text-blue-900 text-blue-400 px-8 py-4 rounded-lg text-lg font-semibold transition-all"
@@ -176,15 +179,21 @@ const Home = () => {
           <p className="text-xl text-blue-100 mb-8">
             Join thousands of video professionals who trust VideoFix Pro for reliable solutions
           </p>
-          <Link
-            to="/dashboard"
+          <button
+            onClick={() => setIsDiagnosticsOpen(true)}
             className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg text-lg font-semibold transition-colors inline-flex items-center"
           >
             Start Your Free Diagnosis
             <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
+          </button>
         </div>
       </section>
+
+      {/* System Diagnostics Modal */}
+      <SystemDiagnosticsModal 
+        isOpen={isDiagnosticsOpen}
+        onClose={() => setIsDiagnosticsOpen(false)}
+      />
     </div>
   );
 };

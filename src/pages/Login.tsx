@@ -54,11 +54,12 @@ const Login: React.FC = () => {
       // Redirect to dashboard on successful login
       navigate('/dashboard');
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
       
       // Handle specific Firebase errors
-      switch (error.code) {
+      const firebaseError = error as { code?: string };
+      switch (firebaseError.code) {
         case 'auth/user-not-found':
           setError('No account found with this email address');
           break;

@@ -20,7 +20,7 @@ const FirebaseExample: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Array<{ id: string; text: string; userId: string; email: string | null; timestamp: Date }>>([]);
 
   useEffect(() => {
     // Listen for auth state changes
@@ -36,8 +36,8 @@ const FirebaseExample: React.FC = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       setMessage('Signed in successfully!');
-    } catch (error: any) {
-      setMessage(`Error: ${error.message}`);
+    } catch (error: unknown) {
+      setMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -46,8 +46,8 @@ const FirebaseExample: React.FC = () => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       setMessage('Account created successfully!');
-    } catch (error: any) {
-      setMessage(`Error: ${error.message}`);
+    } catch (error: unknown) {
+      setMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -55,8 +55,8 @@ const FirebaseExample: React.FC = () => {
     try {
       await signOut(auth);
       setMessage('Signed out successfully!');
-    } catch (error: any) {
-      setMessage(`Error: ${error.message}`);
+    } catch (error: unknown) {
+      setMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -71,7 +71,7 @@ const FirebaseExample: React.FC = () => {
         timestamp: new Date()
       });
       setMessage('');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding message:', error);
     }
   };
@@ -85,7 +85,7 @@ const FirebaseExample: React.FC = () => {
         ...doc.data()
       }));
       setMessages(messagesData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading messages:', error);
     }
   };

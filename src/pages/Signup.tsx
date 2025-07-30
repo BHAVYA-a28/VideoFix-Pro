@@ -86,11 +86,12 @@ const Signup: React.FC = () => {
         navigate('/dashboard');
       }, 2000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Signup error:', error);
       
       // Handle specific Firebase errors
-      switch (error.code) {
+      const firebaseError = error as { code?: string };
+      switch (firebaseError.code) {
         case 'auth/email-already-in-use':
           setError('An account with this email already exists');
           break;

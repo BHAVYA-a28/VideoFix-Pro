@@ -1,5 +1,5 @@
 import React from 'react';
-import { VideoIcon, Mail, Phone, MapPin } from 'lucide-react';
+import { VideoIcon, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {

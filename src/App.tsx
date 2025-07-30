@@ -8,6 +8,7 @@ import Services from './pages/Services';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import PluginManager from './pages/PluginManager';
 import FirebaseExample from './components/FirebaseExample';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -30,6 +31,7 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/plugins" element={<PluginManager />} />
               <Route path="/firebase" element={<FirebaseExample />} />
             </Routes>
           </main>

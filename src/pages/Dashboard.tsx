@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AlertTriangle, CheckCircle, XCircle, Info, Monitor, HardDrive, Cpu, MemoryStick as Memory, Zap, RefreshCw, Download, Settings } from 'lucide-react';
 
 interface SystemInfo {
@@ -20,7 +20,7 @@ interface DiagnosticResult {
 const Dashboard = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanComplete, setScanComplete] = useState(false);
-  const [systemInfo, setSystemInfo] = useState<SystemInfo>({
+  const [systemInfo] = useState<SystemInfo>({
     os: 'Windows 11 Pro',
     ram: '32 GB',
     storage: '1 TB SSD (68% free)',
