@@ -34,7 +34,7 @@ export const detectSystemInfo = (): SystemInfo => {
   const language = navigator.language;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   
-  // Detect OS
+  // Detect OS with more detailed detection
   let os = 'Unknown';
   if (userAgent.includes('Windows')) {
     if (userAgent.includes('Windows NT 10.0')) {
@@ -57,7 +57,7 @@ export const detectSystemInfo = (): SystemInfo => {
   // Detect architecture
   const architecture = userAgent.includes('WOW64') || userAgent.includes('x64') ? 'x64' : 'x86';
 
-  // Detect browser
+  // Detect browser with version
   let browser = 'Unknown';
   if (userAgent.includes('Chrome')) {
     browser = 'Chrome';
@@ -78,23 +78,48 @@ export const detectSystemInfo = (): SystemInfo => {
   const screenResolution = `${screen.width}x${screen.height}`;
   const colorDepth = screen.colorDepth;
 
-  // Simulate CPU detection (in real app, this would require system APIs)
-  const cpu = 'Intel Core i7-12700K @ 3.6GHz'; // Simulated
+  // Try to get more accurate CPU info from user agent
+  let cpu = 'Unknown';
+  if (userAgent.includes('Intel')) {
+    cpu = 'Intel Processor';
+  } else if (userAgent.includes('AMD')) {
+    cpu = 'AMD Processor';
+  } else if (userAgent.includes('Apple')) {
+    cpu = 'Apple Silicon';
+  } else {
+    cpu = 'Unknown Processor';
+  }
 
-  // Simulate GPU detection
-  const gpu = 'NVIDIA RTX 3070 8GB'; // Simulated
+  // Try to detect GPU capabilities
+  let gpu = 'Unknown';
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      if (debugInfo) {
+        gpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+      } else {
+        gpu = 'WebGL Compatible GPU';
+      }
+    } else {
+      gpu = 'No WebGL Support';
+    }
+  } catch (error) {
+    gpu = 'GPU Detection Failed';
+  }
 
-  // Simulate storage info
+  // Estimate storage based on available features
   const storage = {
-    total: '1 TB SSD',
-    free: '680 GB',
-    used: '320 GB'
+    total: 'Unknown (Browser Restricted)',
+    free: 'Unknown (Browser Restricted)',
+    used: 'Unknown (Browser Restricted)'
   };
 
-  // Simulate network info
+  // Test network capabilities
   const network = {
-    download: '100 Mbps',
-    upload: '50 Mbps'
+    download: 'Unknown (Browser Restricted)',
+    upload: 'Unknown (Browser Restricted)'
   };
 
   return {

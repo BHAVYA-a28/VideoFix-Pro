@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
-import { Check, Zap, Shield, Users, Clock, ArrowRight, Star, Phone, CheckCircle } from 'lucide-react';
+import { Check, Zap, Shield, Users, Clock, ArrowRight, Star, Phone, CheckCircle, CreditCard, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createUPIQRCode } from '../utils/qrCodeData';
+import { 
+  initializePayment, 
+  generateOrderId, 
+  formatAmount, 
+  verifyPayment,
+  type PaymentDetails,
+  type RazorpayResponse 
+} from '../services/razorpay';
+import PaymentStatus from '../components/PaymentStatus';
 
 const Services = () => {
   // const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -26,6 +35,12 @@ const Services = () => {
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentService, setPaymentService] = useState<string>('');
   const [selectedUPIApp, setSelectedUPIApp] = useState<string>('paytm');
+  const [paymentStatus, setPaymentStatus] = useState<'success' | 'failed' | 'pending' | 'processing' | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<{
+    paymentId?: string;
+    orderId?: string;
+    amount?: number;
+  }>({});
 
   const plans = [
     {
@@ -155,11 +170,18 @@ const Services = () => {
 
   const paymentMethods = [
     {
+      id: 'razorpay',
+      name: 'Razorpay Gateway',
+      icon: <CreditCard className="w-6 h-6" />,
+      description: 'Secure payment gateway with cards, UPI, net banking',
+      popular: true
+    },
+    {
       id: 'upi',
       name: 'UPI Payment',
       icon: '💳',
       description: 'Pay using UPI apps like Paytm, Google Pay, PhonePe',
-      popular: true
+      popular: false
     },
     {
       id: 'card',
@@ -171,7 +193,7 @@ const Services = () => {
     {
       id: 'netbanking',
       name: 'Net Banking',
-      icon: '🏦',
+      icon: <Building2 className="w-6 h-6" />,
       description: 'All major banks supported',
       popular: false
     },
@@ -265,27 +287,69 @@ const Services = () => {
     setSelectedUPIApp(app);
   };
 
-  const handlePaymentComplete = () => {
-    setShowPaymentModal(false);
-    setShowUPIQR(false);
-    setSelectedPaymentMethod('');
-    
-    // Show success notification
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    notification.innerHTML = `
-      <div class="flex items-center space-x-2">
-        <div class="w-5 h-5 bg-white rounded-full flex items-center justify-center">
-          <span class="text-green-500 text-xs">✓</span>
-        </div>
-        <span>Payment successful! You will receive a confirmation email shortly.</span>
-      </div>
-    `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      document.body.removeChild(notification);
-    }, 5000);
+  const handlePaymentComplete = async () => {
+    if (selectedPaymentMethod === 'razorpay') {
+      try {
+        const paymentDetails: PaymentDetails = {
+          amount: paymentAmount * 75, // Convert USD to INR (approximate)
+          currency: 'INR',
+          description: paymentService,
+          customerName: bookingForm.name || 'Customer',
+          customerEmail: bookingForm.email || 'customer@example.com',
+          customerPhone: bookingForm.phone,
+          orderId: generateOrderId()
+        };
+
+        await initializePayment(
+          paymentDetails,
+          (response: RazorpayResponse) => {
+            console.log('Payment successful:', response);
+            setPaymentDetails({
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id,
+              amount: paymentAmount * 75
+            });
+            setPaymentStatus('success');
+            setShowPaymentModal(false);
+            setShowUPIQR(false);
+            setSelectedPaymentMethod('');
+            // Here you would typically update your database with payment success
+          },
+          (error: any) => {
+            console.error('Payment failed:', error);
+            setPaymentDetails({
+              orderId: paymentDetails.orderId,
+              amount: paymentAmount * 75
+            });
+            setPaymentStatus('failed');
+            setShowPaymentModal(false);
+            setShowUPIQR(false);
+            setSelectedPaymentMethod('');
+          },
+          () => {
+            console.log('Payment modal closed');
+            setShowPaymentModal(false);
+            setShowUPIQR(false);
+            setSelectedPaymentMethod('');
+          }
+        );
+      } catch (error) {
+        console.error('Error processing payment:', error);
+        alert('Error processing payment. Please try again.');
+      }
+    } else if (selectedPaymentMethod === 'upi') {
+      // Handle UPI payment
+      alert('UPI payment initiated. Please scan the QR code to complete payment.');
+      setShowPaymentModal(false);
+      setShowUPIQR(false);
+      setSelectedPaymentMethod('');
+    } else {
+      // Handle other payment methods
+      alert('Payment method selected. Redirecting to payment gateway...');
+      setShowPaymentModal(false);
+      setShowUPIQR(false);
+      setSelectedPaymentMethod('');
+    }
   };
 
   const handleChatSubmit = (e: React.FormEvent) => {
@@ -719,7 +783,9 @@ const Services = () => {
                       }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <span className="text-2xl">{method.icon}</span>
+                        <span className="text-2xl">
+                          {typeof method.icon === 'string' ? method.icon : method.icon}
+                        </span>
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
                             <h4 className="font-semibold text-gray-900">{method.name}</h4>
@@ -892,6 +958,25 @@ const Services = () => {
           </div>
         )}
       </div>
+
+      {/* Payment Status Modal */}
+      {paymentStatus && (
+        <PaymentStatus
+          status={paymentStatus}
+          paymentId={paymentDetails.paymentId}
+          orderId={paymentDetails.orderId}
+          amount={paymentDetails.amount}
+          onClose={() => {
+            setPaymentStatus(null);
+            setPaymentDetails({});
+          }}
+          onRetry={() => {
+            setPaymentStatus(null);
+            setPaymentDetails({});
+            setShowPaymentModal(true);
+          }}
+        />
+      )}
     </div>
   );
 };
