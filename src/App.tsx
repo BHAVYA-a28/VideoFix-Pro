@@ -9,6 +9,11 @@ import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import PluginManager from './pages/PluginManager';
+import SoftwareDownload from './pages/SoftwareDownload';
+import ProjectManager from './pages/ProjectManager';
+import MediaLibrary from './pages/MediaLibrary';
+import RenderQueue from './pages/RenderQueue';
+import SystemDiagnostics from './pages/SystemDiagnostics';
 import FirebaseExample from './components/FirebaseExample';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -32,6 +37,11 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/plugins" element={<PluginManager />} />
+              <Route path="/software" element={<SoftwareDownload />} />
+              <Route path="/projects/new" element={<ProjectManager />} />
+              <Route path="/media" element={<MediaLibrary />} />
+              <Route path="/render" element={<RenderQueue />} />
+              <Route path="/diagnostics" element={<SystemDiagnostics />} />
               <Route path="/firebase" element={<FirebaseExample />} />
             </Routes>
           </main>

@@ -107,7 +107,7 @@ const PaymentStatus: React.FC<PaymentStatusProps> = ({
                   <div className="flex justify-between">
                     <span className="text-gray-600">Amount:</span>
                     <span className="font-semibold text-gray-900">
-                      ₹{amount.toLocaleString('en-IN')}
+                      {currency === 'INR' ? '₹' : '$'}{amount.toLocaleString('en-IN')}
                     </span>
                   </div>
                 )}

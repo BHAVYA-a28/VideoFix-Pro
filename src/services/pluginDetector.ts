@@ -168,10 +168,11 @@ const checkSoftwareInstallation = async (softwareName: string): Promise<Software
 };
 
 // Check Windows Registry for software installation
-const checkWindowsRegistry = async (_softwareName: string): Promise<boolean> => {
+const checkWindowsRegistry = async (softwareName: string): Promise<boolean> => {
   try {
     // This would require a native app or Electron to access registry
     // For now, we'll simulate the check
+    console.log(`Checking registry for ${softwareName}...`);
     // const registryKeys = {
     //   'Adobe After Effects': [
     //     'HKEY_LOCAL_MACHINE\\SOFTWARE\\Adobe\\Adobe After Effects',
@@ -248,8 +249,9 @@ const detectPlugins = async (softwareName: string): Promise<PluginInfo[]> => {
 };
 
 // Check if specific plugin is installed
-const checkPluginInstallation = async (_softwareName: string, _pluginName: string): Promise<boolean> => {
+const checkPluginInstallation = async (softwareName: string, pluginName: string): Promise<boolean> => {
   // In real implementation, check plugin directories and registry
+  console.log(`Checking if ${pluginName} is installed for ${softwareName}...`);
   // For demo, return random installation status
   return Math.random() > 0.6; // 40% chance of being installed
 };

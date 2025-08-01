@@ -105,7 +105,7 @@ export const detectSystemInfo = (): SystemInfo => {
     } else {
       gpu = 'No WebGL Support';
     }
-  } catch (error) {
+  } catch {
     gpu = 'GPU Detection Failed';
   }
 

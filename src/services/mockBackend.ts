@@ -24,7 +24,7 @@ export const createMockOrder = async (orderData: {
   amount: number;
   currency: string;
   receipt: string;
-  notes?: any;
+  notes?: string;
 }): Promise<MockOrderResponse> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -76,8 +76,8 @@ export const getMockPaymentStatus = async (paymentId: string): Promise<MockPayme
   await new Promise(resolve => setTimeout(resolve, 800));
   
   // Mock payment status
-  const statuses = ['created', 'authorized', 'captured', 'failed'];
-  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)] as any;
+  const statuses = ['created', 'authorized', 'captured', 'failed'] as const;
+  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
   
   return {
     payment_id: paymentId,
@@ -91,9 +91,12 @@ export const getMockPaymentStatus = async (paymentId: string): Promise<MockPayme
 };
 
 // Mock webhook handler
-export const handleMockWebhook = async (webhookData: any): Promise<{ success: boolean; message: string }> => {
+export const handleMockWebhook = async (webhookData: Record<string, unknown>): Promise<{ success: boolean; message: string }> => {
   // Simulate webhook processing
   await new Promise(resolve => setTimeout(resolve, 300));
+  
+  // In a real implementation, webhookData would be processed here
+  console.log('Processing webhook data:', webhookData);
   
   return {
     success: true,

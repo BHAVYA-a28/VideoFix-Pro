@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  detectSystemInfo, 
-  runDiagnostics,
-  type SystemInfo,
-  type DiagnosticResult
+  detectSystemInfo
 } from '../services/systemDetector';
 import { 
   downloadPlugin, 
@@ -32,19 +29,25 @@ interface Software {
   installDate: string;
 }
 
-interface DetectedPlugin {
-  name: string;
-  version: string;
-  compatible: boolean;
+interface DetectionResult {
+  videoEditingSoftware: Software[];
+  detectedPlugins: {
+    name: string;
+    version: string;
+    compatible: boolean;
+  }[];
+  systemInfo: {
+    os: string;
+    totalMemory: string;
+    processor: string;
+  };
 }
 
 const PluginManager: React.FC = () => {
-  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
-  const [diagnostics, setDiagnostics] = useState<DiagnosticResult[]>([]);
-  const [detectionResult, setDetectionResult] = useState<any>(null);
+  const [detectionResult, setDetectionResult] = useState<DetectionResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
+  const [selectedPlugins] = useState<string[]>([]);
   const [installationProgress, setInstallationProgress] = useState<InstallationProgress[]>([]);
   const [installing, setInstalling] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,9 +61,6 @@ const PluginManager: React.FC = () => {
     try {
       // Get real browser-based system information
       const detectedSystem = detectSystemInfo();
-      const diagnosticResults = runDiagnostics(detectedSystem);
-      setSystemInfo(detectedSystem);
-      setDiagnostics(diagnosticResults);
       
       // Show browser limitations message
       console.log('Browser-based system detection completed');
@@ -161,14 +161,7 @@ const PluginManager: React.FC = () => {
     }
   };
 
-  // Toggle plugin selection
-  const togglePluginSelection = (pluginName: string) => {
-    setSelectedPlugins(prev => 
-      prev.includes(pluginName) 
-        ? prev.filter(p => p !== pluginName)
-        : [...prev, pluginName]
-    );
-  };
+
 
   // Get filtered plugins based on search
   const getFilteredPlugins = () => {

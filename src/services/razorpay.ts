@@ -107,7 +107,7 @@ export const createPaymentOrder = async (paymentDetails: PaymentDetails): Promis
 export const initializePayment = async (
   paymentDetails: PaymentDetails,
   onSuccess: (response: RazorpayResponse) => void,
-  onFailure: (error: any) => void,
+  onFailure: (error: Error) => void,
   onClose: () => void
 ): Promise<void> => {
   try {
@@ -148,7 +148,7 @@ export const initializePayment = async (
     };
 
     // Initialize Razorpay
-    const razorpay = new (window as any).Razorpay(options);
+    const razorpay = new (window as { Razorpay: new (options: RazorpayOptions) => void }).Razorpay(options);
     razorpay.open();
 
   } catch (error) {
@@ -180,7 +180,7 @@ export const verifyPayment = async (
       throw new Error('Payment verification failed');
     }
 
-    const data = await response.json();
+    const data = await response.json() as { verified: boolean };
     return data.verified;
   } catch (error) {
     console.error('Error verifying payment:', error);
@@ -202,7 +202,7 @@ export const formatAmount = (amount: number, currency: string = 'INR'): string =
 };
 
 // Get payment status
-export const getPaymentStatus = (paymentId: string): Promise<any> => {
+export const getPaymentStatus = (paymentId: string): Promise<{ status: string; amount: number; currency: string } | null> => {
   return fetch(`/api/payment-status/${paymentId}`)
     .then(response => response.json())
     .catch(error => {

@@ -10,6 +10,9 @@ const Contact = () => {
     message: ''
   });
 
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [showScreenShareModal, setShowScreenShareModal] = useState(false);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
@@ -31,6 +34,27 @@ const Contact = () => {
     });
   };
 
+  // Contact method handlers
+  const handleLiveChat = () => {
+    setShowChatModal(true);
+  };
+
+  const handleEmailSupport = () => {
+    const subject = encodeURIComponent('VideoFix Pro Support Request');
+    const body = encodeURIComponent('Hello,\n\nI need assistance with:\n\n[Please describe your issue here]\n\nThank you!');
+    window.open(`mailto:support@videofixpro.com?subject=${subject}&body=${body}`, '_blank');
+  };
+
+  const handlePhoneSupport = () => {
+    if (confirm('Would you like to call our support team at +91 9602398321?')) {
+      window.open('tel:+919602398321', '_blank');
+    }
+  };
+
+  const handleScreenShare = () => {
+    setShowScreenShareModal(true);
+  };
+
   const contactMethods = [
     {
       icon: MessageSquare,
@@ -38,7 +62,8 @@ const Contact = () => {
       description: 'Chat with our support team',
       value: 'Available 24/7',
       action: 'Start Chat',
-      color: 'text-blue-600 bg-blue-100'
+      color: 'text-blue-600 bg-blue-100',
+      handler: handleLiveChat
     },
     {
       icon: Mail,
@@ -46,15 +71,17 @@ const Contact = () => {
       description: 'Send us a detailed message',
       value: 'support@videofixpro.com',
       action: 'Send Email',
-      color: 'text-green-600 bg-green-100'
+      color: 'text-green-600 bg-green-100',
+      handler: handleEmailSupport
     },
     {
       icon: Phone,
       title: 'Phone Support',
       description: 'Speak directly with an expert',
-      value: '+1 (555) 123-4567',
+      value: '+91 9602398321',
       action: 'Call Now',
-      color: 'text-purple-600 bg-purple-100'
+      color: 'text-purple-600 bg-purple-100',
+      handler: handlePhoneSupport
     },
     {
       icon: Video,
@@ -62,7 +89,8 @@ const Contact = () => {
       description: 'Remote assistance session',
       value: 'Schedule a session',
       action: 'Book Now',
-      color: 'text-orange-600 bg-orange-100'
+      color: 'text-orange-600 bg-orange-100',
+      handler: handleScreenShare
     }
   ];
 
@@ -199,7 +227,11 @@ const Contact = () => {
               
               <div className="space-y-4">
                 {contactMethods.map((method, index) => (
-                  <div key={index} className="flex items-start space-x-4 p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                  <div 
+                    key={index} 
+                    className="flex items-start space-x-4 p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={method.handler}
+                  >
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${method.color}`}>
                       <method.icon className="h-5 w-5" />
                     </div>
@@ -207,6 +239,9 @@ const Contact = () => {
                       <h4 className="font-semibold text-gray-900">{method.title}</h4>
                       <p className="text-sm text-gray-600 mb-1">{method.description}</p>
                       <p className="text-sm font-medium text-gray-900">{method.value}</p>
+                      <button className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                        {method.action}
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -290,6 +325,86 @@ const Contact = () => {
           </div>
         </div>
       </div>
+
+      {/* Live Chat Modal */}
+      {showChatModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Live Chat Support</h3>
+              <button 
+                onClick={() => setShowChatModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                Our live chat is available 24/7. A support agent will be with you shortly.
+              </p>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Chat Status:</strong> Connecting to agent...
+                </p>
+              </div>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => setShowChatModal(false)}
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
+                >
+                  Start Chat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Screen Share Modal */}
+      {showScreenShareModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Schedule Screen Share Session</h3>
+              <button 
+                onClick={() => setShowScreenShareModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                Schedule a remote assistance session with our experts. We'll help you resolve issues directly on your system.
+              </p>
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <p className="text-sm text-orange-800">
+                  <strong>Next Available:</strong> Within 30 minutes
+                </p>
+              </div>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => setShowScreenShareModal(false)}
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="flex-1 bg-orange-600 text-white py-2 px-4 rounded hover:bg-orange-700 transition-colors"
+                >
+                  Schedule Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

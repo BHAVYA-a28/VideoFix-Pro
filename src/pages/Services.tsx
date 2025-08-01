@@ -5,8 +5,6 @@ import { createUPIQRCode } from '../utils/qrCodeData';
 import { 
   initializePayment, 
   generateOrderId, 
-  formatAmount, 
-  verifyPayment,
   type PaymentDetails,
   type RazorpayResponse 
 } from '../services/razorpay';
@@ -315,7 +313,7 @@ const Services = () => {
             setSelectedPaymentMethod('');
             // Here you would typically update your database with payment success
           },
-          (error: any) => {
+          (error: Error) => {
             console.error('Payment failed:', error);
             setPaymentDetails({
               orderId: paymentDetails.orderId,
