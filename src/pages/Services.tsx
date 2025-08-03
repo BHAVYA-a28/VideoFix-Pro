@@ -201,13 +201,6 @@ const Services = () => {
       icon: '📱',
       description: 'Paytm, Google Pay, PhonePe wallets',
       popular: false
-    },
-    {
-      id: 'cod',
-      name: 'Cash on Delivery',
-      icon: '💰',
-      description: 'Pay after service completion',
-      popular: false
     }
   ];
 
@@ -744,7 +737,7 @@ const Services = () => {
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">Choose Payment Method</h3>
               <button
@@ -753,7 +746,7 @@ const Services = () => {
                   setShowUPIQR(false);
                   setSelectedPaymentMethod('');
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 ✕
               </button>
@@ -769,31 +762,31 @@ const Services = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-6">
                   {paymentMethods.map((method) => (
                     <button
                       key={method.id}
                       onClick={() => handlePaymentMethodSelect(method.id)}
-                      className={`w-full p-4 border rounded-lg text-left transition-colors ${
+                      className={`p-4 border rounded-lg text-left transition-colors hover:shadow-md ${
                         selectedPaymentMethod === method.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
+                          : 'border-gray-200 hover:border-blue-300'
                       }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <span className="text-2xl">
+                        <span className="text-2xl flex-shrink-0">
                           {typeof method.icon === 'string' ? method.icon : method.icon}
                         </span>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            <h4 className="font-semibold text-gray-900">{method.name}</h4>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h4 className="font-semibold text-gray-900 truncate">{method.name}</h4>
                             {method.popular && (
-                              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex-shrink-0">
                                 Popular
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600">{method.description}</p>
+                          <p className="text-sm text-gray-600 line-clamp-2">{method.description}</p>
                         </div>
                       </div>
                     </button>
@@ -812,64 +805,68 @@ const Services = () => {
               <div className="text-center">
                 <h4 className="text-lg font-semibold text-gray-900 mb-4">UPI Payment Options</h4>
                 
-                <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                   <button
                     onClick={() => handleUPIAppSelect('paytm')}
-                    className={`p-4 border rounded-lg transition-colors ${
+                    className={`p-3 border rounded-lg transition-colors hover:shadow-md ${
                       selectedUPIApp === 'paytm' 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-200 hover:border-blue-500'
+                        ? 'border-blue-500 bg-blue-50 shadow-md' 
+                        : 'border-gray-200 hover:border-blue-300'
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-2xl mb-2">📱</div>
-                      <span className="text-sm font-medium">Paytm</span>
+                      <div className="text-xl mb-1">📱</div>
+                      <span className="text-xs font-medium">Paytm</span>
                     </div>
                   </button>
                   
                   <button
                     onClick={() => handleUPIAppSelect('googlepay')}
-                    className={`p-4 border rounded-lg transition-colors ${
+                    className={`p-3 border rounded-lg transition-colors hover:shadow-md ${
                       selectedUPIApp === 'googlepay' 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-200 hover:border-blue-500'
+                        ? 'border-blue-500 bg-blue-50 shadow-md' 
+                        : 'border-gray-200 hover:border-blue-300'
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-2xl mb-2">📱</div>
-                      <span className="text-sm font-medium">Google Pay</span>
+                      <div className="text-xl mb-1">📱</div>
+                      <span className="text-xs font-medium">Google Pay</span>
                     </div>
                   </button>
                   
                   <button
                     onClick={() => handleUPIAppSelect('phonepe')}
-                    className={`p-4 border rounded-lg transition-colors ${
+                    className={`p-3 border rounded-lg transition-colors hover:shadow-md ${
                       selectedUPIApp === 'phonepe' 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-200 hover:border-blue-500'
+                        ? 'border-blue-500 bg-blue-50 shadow-md' 
+                        : 'border-gray-200 hover:border-blue-300'
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-2xl mb-2">📱</div>
-                      <span className="text-sm font-medium">PhonePe</span>
+                      <div className="text-xl mb-1">📱</div>
+                      <span className="text-xs font-medium">PhonePe</span>
                     </div>
                   </button>
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                  <h5 className="font-semibold text-gray-900 mb-2">{selectedUPIApp === 'paytm' ? 'Paytm' : selectedUPIApp === 'googlepay' ? 'Google Pay' : 'PhonePe'} QR Code</h5>
-                  <div className="bg-white p-4 rounded-lg inline-block">
-                    <div className="w-48 h-48 bg-white rounded-lg flex items-center justify-center border-2 border-gray-200">
-                      <img 
-                        src={createUPIQRCode(upiDetails[selectedUPIApp as keyof typeof upiDetails]?.upiId || '', paymentAmount * 75)}
-                        alt="UPI QR Code" 
-                        className="w-44 h-44 object-contain"
-                      />
+                  <h5 className="font-semibold text-gray-900 mb-3">{selectedUPIApp === 'paytm' ? 'Paytm' : selectedUPIApp === 'googlepay' ? 'Google Pay' : 'PhonePe'} QR Code</h5>
+                  <div className="flex justify-center">
+                    <div className="bg-white p-3 rounded-lg inline-block">
+                      <div className="w-40 h-40 sm:w-48 sm:h-48 bg-white rounded-lg flex items-center justify-center border-2 border-gray-200">
+                        <img 
+                          src={createUPIQRCode(upiDetails[selectedUPIApp as keyof typeof upiDetails]?.upiId || '', paymentAmount * 75)}
+                          alt="UPI QR Code" 
+                          className="w-36 h-36 sm:w-44 sm:h-44 object-contain"
+                        />
+                      </div>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">UPI ID: {upiDetails[selectedUPIApp as keyof typeof upiDetails]?.upiId}</p>
-                  <p className="text-sm text-gray-600">Amount: ₹{paymentAmount * 75}</p>
-                  <p className="text-xs text-gray-500 mt-1">Scan with {selectedUPIApp === 'paytm' ? 'Paytm' : selectedUPIApp === 'googlepay' ? 'Google Pay' : 'PhonePe'} app</p>
+                  <div className="mt-3 text-center">
+                    <p className="text-sm text-gray-600">UPI ID: {upiDetails[selectedUPIApp as keyof typeof upiDetails]?.upiId}</p>
+                    <p className="text-sm text-gray-600 font-medium">Amount: ₹{paymentAmount * 75}</p>
+                    <p className="text-xs text-gray-500 mt-1">Scan with {selectedUPIApp === 'paytm' ? 'Paytm' : selectedUPIApp === 'googlepay' ? 'Google Pay' : 'PhonePe'} app</p>
+                  </div>
                 </div>
 
                 <div className="flex space-x-3">

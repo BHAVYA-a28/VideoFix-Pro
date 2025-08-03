@@ -165,6 +165,198 @@ export const SOFTWARE_DOWNLOADS: Record<string, SoftwareDownload> = {
     },
     license: 'free',
     category: 'video-editing'
+  },
+  'Adobe Photoshop': {
+    name: 'Adobe Photoshop',
+    officialUrl: 'https://www.adobe.com/products/photoshop.html',
+    downloadUrl: 'https://www.adobe.com/products/photoshop/download.html',
+    size: '3.5GB',
+    version: '2024',
+    description: 'Professional image editing and graphic design software',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+'],
+      ram: '8GB minimum, 16GB recommended',
+      storage: '10GB available space',
+      graphics: 'DirectX 12 compatible'
+    },
+    license: 'subscription',
+    category: 'motion-graphics'
+  },
+  'Adobe Illustrator': {
+    name: 'Adobe Illustrator',
+    officialUrl: 'https://www.adobe.com/products/illustrator.html',
+    downloadUrl: 'https://www.adobe.com/products/illustrator/download.html',
+    size: '2.8GB',
+    version: '2024',
+    description: 'Vector graphics editor for logos, icons, and illustrations',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+'],
+      ram: '8GB minimum, 16GB recommended',
+      storage: '8GB available space',
+      graphics: 'DirectX 12 compatible'
+    },
+    license: 'subscription',
+    category: 'motion-graphics'
+  },
+  'Cinema 4D': {
+    name: 'Cinema 4D',
+    officialUrl: 'https://www.maxon.net/en/cinema-4d',
+    downloadUrl: 'https://www.maxon.net/en/downloads',
+    size: '4.2GB',
+    version: '2024.1',
+    description: 'Professional 3D modeling, animation, and rendering software',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+'],
+      ram: '16GB minimum, 32GB recommended',
+      storage: '15GB available space',
+      graphics: 'OpenGL 4.1 compatible'
+    },
+    license: 'paid',
+    category: 'motion-graphics'
+  },
+  'Nuke': {
+    name: 'Nuke',
+    officialUrl: 'https://www.foundry.com/products/nuke',
+    downloadUrl: 'https://www.foundry.com/products/nuke/trial',
+    size: '5.1GB',
+    version: '14.0',
+    description: 'Professional compositing and visual effects software',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+', 'Linux'],
+      ram: '16GB minimum, 32GB recommended',
+      storage: '20GB available space',
+      graphics: 'OpenGL 4.0 compatible'
+    },
+    license: 'paid',
+    category: 'compositing'
+  },
+  'Fusion': {
+    name: 'Fusion',
+    officialUrl: 'https://www.blackmagicdesign.com/products/fusion',
+    downloadUrl: 'https://www.blackmagicdesign.com/support/download/',
+    size: '3.8GB',
+    version: '18.5',
+    description: 'Professional node-based compositing and visual effects',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+', 'Linux'],
+      ram: '16GB minimum, 32GB recommended',
+      storage: '12GB available space',
+      graphics: 'OpenCL 1.2 or CUDA 11'
+    },
+    license: 'free',
+    category: 'compositing'
+  },
+  'Baselight': {
+    name: 'Baselight',
+    officialUrl: 'https://www.filmlight.ltd.uk/products/baselight/',
+    downloadUrl: 'https://www.filmlight.ltd.uk/products/baselight/trial/',
+    size: '6.2GB',
+    version: '5.3',
+    description: 'Professional color grading and finishing software',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+', 'Linux'],
+      ram: '32GB minimum, 64GB recommended',
+      storage: '25GB available space',
+      graphics: 'OpenGL 4.5 compatible'
+    },
+    license: 'paid',
+    category: 'color-grading'
+  },
+  'Maya': {
+    name: 'Maya',
+    officialUrl: 'https://www.autodesk.com/products/maya/overview',
+    downloadUrl: 'https://www.autodesk.com/products/maya/free-trial',
+    size: '4.8GB',
+    version: '2024.2',
+    description: 'Professional 3D animation, modeling, and rendering software',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+', 'Linux'],
+      ram: '16GB minimum, 32GB recommended',
+      storage: '18GB available space',
+      graphics: 'DirectX 11 compatible'
+    },
+    license: 'subscription',
+    category: 'motion-graphics'
+  },
+  'Houdini': {
+    name: 'Houdini',
+    officialUrl: 'https://www.sidefx.com/products/houdini/',
+    downloadUrl: 'https://www.sidefx.com/download/',
+    size: '5.5GB',
+    version: '20.0',
+    description: 'Professional 3D animation and visual effects software',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+', 'Linux'],
+      ram: '16GB minimum, 32GB recommended',
+      storage: '20GB available space',
+      graphics: 'OpenGL 4.0 compatible'
+    },
+    license: 'paid',
+    category: 'motion-graphics'
+  },
+  'ZBrush': {
+    name: 'ZBrush',
+    officialUrl: 'https://pixologic.com/',
+    downloadUrl: 'https://pixologic.com/download/',
+    size: '2.1GB',
+    version: '2024',
+    description: 'Digital sculpting and painting software',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+'],
+      ram: '8GB minimum, 16GB recommended',
+      storage: '8GB available space',
+      graphics: 'OpenGL 3.3 compatible'
+    },
+    license: 'paid',
+    category: 'motion-graphics'
+  },
+  'Substance Painter': {
+    name: 'Substance Painter',
+    officialUrl: 'https://www.adobe.com/products/substance3d-painter.html',
+    downloadUrl: 'https://www.adobe.com/products/substance3d-painter/download.html',
+    size: '3.2GB',
+    version: '2024.1',
+    description: '3D texturing and material creation software',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+'],
+      ram: '8GB minimum, 16GB recommended',
+      storage: '10GB available space',
+      graphics: 'DirectX 11 compatible'
+    },
+    license: 'subscription',
+    category: 'motion-graphics'
+  },
+  'Arnold': {
+    name: 'Arnold',
+    officialUrl: 'https://www.autodesk.com/products/arnold/overview',
+    downloadUrl: 'https://www.autodesk.com/products/arnold/download',
+    size: '2.8GB',
+    version: '7.2',
+    description: 'Advanced ray-tracing renderer for 3D animation',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+', 'Linux'],
+      ram: '16GB minimum, 32GB recommended',
+      storage: '8GB available space',
+      graphics: 'OpenGL 4.0 compatible'
+    },
+    license: 'paid',
+    category: 'motion-graphics'
+  },
+  'Redshift': {
+    name: 'Redshift',
+    officialUrl: 'https://www.maxon.net/en/redshift',
+    downloadUrl: 'https://www.maxon.net/en/downloads',
+    size: '1.5GB',
+    version: '3.6',
+    description: 'GPU-accelerated renderer for 3D animation and VFX',
+    systemRequirements: {
+      os: ['Windows 10', 'Windows 11', 'macOS 10.15+', 'Linux'],
+      ram: '16GB minimum, 32GB recommended',
+      storage: '5GB available space',
+      graphics: 'CUDA 11.0 or OpenCL 1.2'
+    },
+    license: 'paid',
+    category: 'motion-graphics'
   }
 };
 

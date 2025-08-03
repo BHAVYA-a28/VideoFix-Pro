@@ -90,6 +90,58 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [clickedAction, setClickedAction] = useState<string | null>(null);
 
+  // Define quickActions before using them in useEffect
+  const quickActions: QuickAction[] = useMemo(() => [
+    {
+      id: 'new-project',
+      title: 'New Project',
+      description: 'Create a new video editing project',
+      icon: <FileVideo className="h-6 w-6" />,
+      color: 'bg-blue-500',
+      path: '/projects/new'
+    },
+    {
+      id: 'software-downloads',
+      title: 'Software Downloads',
+      description: 'Download video editing software',
+      icon: <Download className="h-6 w-6" />,
+      color: 'bg-green-500',
+      path: '/software'
+    },
+    {
+      id: 'plugin-manager',
+      title: 'Plugin Manager',
+      description: 'Manage video editing plugins',
+      icon: <Palette className="h-6 w-6" />,
+      color: 'bg-purple-500',
+      path: '/plugins'
+    },
+    {
+      id: 'media-library',
+      title: 'Media Library',
+      description: 'Browse and organize media files',
+      icon: <FolderOpen className="h-6 w-6" />,
+      color: 'bg-orange-500',
+      path: '/media'
+    },
+    {
+      id: 'render-queue',
+      title: 'Render Queue',
+      description: 'Manage video rendering tasks',
+      icon: <Film className="h-6 w-6" />,
+      color: 'bg-red-500',
+      path: '/render'
+    },
+    {
+      id: 'system-diagnostics',
+      title: 'System Diagnostics',
+      description: 'Check system performance and compatibility',
+      icon: <Settings className="h-6 w-6" />,
+      color: 'bg-indigo-500',
+      path: '/diagnostics'
+    }
+  ], []);
+
   // Keyboard shortcuts for quick actions
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -118,7 +170,7 @@ const Dashboard = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [navigate, quickActions]);
+  }, [navigate]);
   const [systemInfo] = useState<SystemInfo>({
     os: 'Windows 11 Pro',
     ram: '32 GB',
@@ -237,57 +289,6 @@ const Dashboard = () => {
       progress: 100
     }
   ]);
-
-  const quickActions: QuickAction[] = useMemo(() => [
-    {
-      id: 'new-project',
-      title: 'New Project',
-      description: 'Create a new video editing project',
-      icon: <FileVideo className="h-6 w-6" />,
-      color: 'bg-blue-500',
-      path: '/projects/new'
-    },
-    {
-      id: 'software-downloads',
-      title: 'Software Downloads',
-      description: 'Download video editing software',
-      icon: <Download className="h-6 w-6" />,
-      color: 'bg-green-500',
-      path: '/software'
-    },
-    {
-      id: 'plugin-manager',
-      title: 'Plugin Manager',
-      description: 'Manage video editing plugins',
-      icon: <Palette className="h-6 w-6" />,
-      color: 'bg-purple-500',
-      path: '/plugins'
-    },
-    {
-      id: 'media-library',
-      title: 'Media Library',
-      description: 'Browse and organize media files',
-      icon: <FolderOpen className="h-6 w-6" />,
-      color: 'bg-orange-500',
-      path: '/media'
-    },
-    {
-      id: 'render-queue',
-      title: 'Render Queue',
-      description: 'Manage video rendering tasks',
-      icon: <Film className="h-6 w-6" />,
-      color: 'bg-red-500',
-      path: '/render'
-    },
-    {
-      id: 'system-diagnostics',
-      title: 'System Diagnostics',
-      description: 'Check system performance and compatibility',
-      icon: <Settings className="h-6 w-6" />,
-      color: 'bg-indigo-500',
-      path: '/diagnostics'
-    }
-  ], []);
 
   // Add status indicators for quick actions
   const getActionStatus = (actionId: string) => {

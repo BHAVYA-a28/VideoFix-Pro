@@ -20,6 +20,8 @@ import {
   searchSoftware,
   getSystemInfo,
   checkSystemCompatibility,
+  openOfficialWebsite,
+  validateDownloadRequirements,
   type SoftwareDownload,
   type SystemInfo
 } from '../services/softwareDownloader';
@@ -38,6 +40,9 @@ const SoftwareDownload = () => {
   const [showSystemInfo, setShowSystemInfo] = useState(false);
   const [selectedSoftware, setSelectedSoftware] = useState<SoftwareDownload | null>(null);
   const [showRequirements, setShowRequirements] = useState(false);
+  const [showMoreSoftware, setShowMoreSoftware] = useState(false);
+  const [displayedSoftware, setDisplayedSoftware] = useState<SoftwareDownload[]>([]);
+  const [initialDisplayCount] = useState(6);
 
   useEffect(() => {
     loadSoftware();
@@ -63,7 +68,16 @@ const SoftwareDownload = () => {
     }
 
     setFilteredSoftware(filtered);
+    
+    // Reset show more state when filters change
+    setShowMoreSoftware(false);
   }, [softwareList, searchQuery, selectedCategory, selectedLicense]);
+
+  // Calculate which software to display
+  useEffect(() => {
+    const displayCount = showMoreSoftware ? filteredSoftware.length : Math.min(initialDisplayCount, filteredSoftware.length);
+    setDisplayedSoftware(filteredSoftware.slice(0, displayCount));
+  }, [filteredSoftware, showMoreSoftware, initialDisplayCount]);
 
   const loadSoftware = () => {
     const allSoftware = getAllSoftware();
@@ -258,8 +272,9 @@ const SoftwareDownload = () => {
             <p className="text-gray-600">Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSoftware.map((software) => {
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {displayedSoftware.map((software) => {
               const compatibility = systemInfo ? checkSystemCompatibility(software, systemInfo) : { compatible: true, issues: [] };
 
               return (
@@ -361,8 +376,21 @@ const SoftwareDownload = () => {
 
                 </div>
               );
-            })}
-          </div>
+              })}
+            </div>
+            
+            {/* More Software Button */}
+            {filteredSoftware.length > initialDisplayCount && (
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => setShowMoreSoftware(!showMoreSoftware)}
+                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                  {showMoreSoftware ? 'Show Less' : `Show ${filteredSoftware.length - initialDisplayCount} More Software`}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -451,7 +479,7 @@ const SoftwareDownload = () => {
                             <span className="font-medium">Compatibility issues found:</span>
                           </div>
                           <ul className="list-disc list-inside text-sm text-red-600 ml-6">
-                            {compatibility.issues.map((issue, index) => (
+                            {compatibility.issues.map((issue: string, index: number) => (
                               <li key={index}>{issue}</li>
                             ))}
                           </ul>
@@ -470,7 +498,7 @@ const SoftwareDownload = () => {
                   return (
                     <div className="space-y-2">
                       <ul className="list-disc list-inside text-sm text-gray-600">
-                        {requirements.requirements.map((req, index) => (
+                        {requirements.requirements.map((req: string, index: number) => (
                           <li key={index}>{req}</li>
                         ))}
                       </ul>
@@ -478,7 +506,7 @@ const SoftwareDownload = () => {
                         <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                           <h5 className="font-medium text-yellow-800 mb-2">Warnings:</h5>
                           <ul className="list-disc list-inside text-sm text-yellow-700">
-                            {requirements.warnings.map((warning, index) => (
+                            {requirements.warnings.map((warning: string, index: number) => (
                               <li key={index}>{warning}</li>
                             ))}
                           </ul>
