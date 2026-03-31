@@ -8,10 +8,9 @@ import {
   Cpu, 
   MemoryStick as Memory, 
   Zap, 
-  Download, 
+  Download,
   Settings, 
   BarChart3, 
-  Clock, 
   CheckCircle, 
   Play,
   FileVideo,
@@ -28,8 +27,16 @@ import {
   TrendingDown,
   Video,
   Image,
-  Headphones
+  Headphones,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
+import { 
+  detectSystemInfo, 
+  getPerformanceMetrics, 
+  type SystemInfo as DetectedSystemInfo,
+  type PerformanceMetrics as DetectedPerformanceMetrics
+} from '../services/systemDetector';
 
 interface SystemInfo {
   os: string;
@@ -37,8 +44,13 @@ interface SystemInfo {
   storage: string;
   gpu: string;
   cpu: string;
+  cpuCores: number;
   uptime: string;
-  temperature: string;
+  architecture: string;
+  browser: string;
+  screenResolution: string;
+  network: string;
+  online: boolean;
 }
 
 interface ProjectStats {
@@ -89,6 +101,8 @@ interface MediaLibrary {
 const Dashboard = () => {
   const navigate = useNavigate();
   const [clickedAction, setClickedAction] = useState<string | null>(null);
+  const [isLoadingSystem, setIsLoadingSystem] = useState(true);
+  const [systemDetectedAt, setSystemDetectedAt] = useState<Date | null>(null);
 
   // Define quickActions before using them in useEffect
   const quickActions: QuickAction[] = useMemo(() => [
@@ -156,6 +170,10 @@ const Dashboard = () => {
       };
 
       if (quickActionMap[key] && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        // Don't intercept if user is typing in an input
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+
         event.preventDefault();
         const action = quickActions.find(a => a.id === quickActionMap[key]);
         if (action) {
@@ -170,125 +188,220 @@ const Dashboard = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [navigate]);
-  const [systemInfo] = useState<SystemInfo>({
-    os: 'Windows 11 Pro',
-    ram: '32 GB',
-    storage: '1 TB SSD (68% free)',
-    gpu: 'NVIDIA RTX 4080',
-    cpu: 'Intel i9-13900K',
-    uptime: '3 days, 7 hours',
-    temperature: '45°C'
+  }, [navigate, quickActions]);
+
+  // REAL system info — starts with empty, filled by detection
+  const [systemInfo, setSystemInfo] = useState<SystemInfo>({
+    os: 'Detecting...',
+    ram: 'Detecting...',
+    storage: 'Detecting...',
+    gpu: 'Detecting...',
+    cpu: 'Detecting...',
+    cpuCores: 0,
+    uptime: 'Detecting...',
+    architecture: 'Detecting...',
+    browser: 'Detecting...',
+    screenResolution: 'Detecting...',
+    network: 'Detecting...',
+    online: navigator.onLine
   });
 
-  const [projectStats] = useState<ProjectStats>({
-    totalProjects: 24,
-    activeProjects: 3,
-    completedProjects: 21,
-    totalHours: 156,
-    totalExports: 47,
-    totalImports: 89
-  });
-
-  const [mediaLibrary] = useState<MediaLibrary>({
-    videos: 156,
-    images: 342,
-    audio: 89,
-    totalSize: '2.4 TB',
-    lastBackup: '2 hours ago'
-  });
-
-  const [performanceMetrics] = useState<PerformanceMetric[]>([
-    {
-      name: 'CPU Usage',
-      value: 23,
-      unit: '%',
-      status: 'excellent',
-      trend: 'stable',
-      icon: <Cpu className="h-6 w-6" />
-    },
-    {
-      name: 'Memory Usage',
-      value: 45,
-      unit: '%',
-      status: 'good',
-      trend: 'stable',
-      icon: <Memory className="h-6 w-6" />
-    },
-    {
-      name: 'Storage Usage',
-      value: 32,
-      unit: '%',
-      status: 'excellent',
-      trend: 'stable',
-      icon: <HardDrive className="h-6 w-6" />
-    },
-    {
-      name: 'GPU Usage',
-      value: 18,
-      unit: '%',
-      status: 'excellent',
-      trend: 'down',
-      icon: <Zap className="h-6 w-6" />
-    }
+  // REAL performance metrics — starts with zeros, filled by detection
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([
+    { name: 'CPU Usage', value: 0, unit: '%', status: 'excellent', trend: 'stable', icon: <Cpu className="h-6 w-6" /> },
+    { name: 'Memory Usage', value: 0, unit: '%', status: 'excellent', trend: 'stable', icon: <Memory className="h-6 w-6" /> },
+    { name: 'Storage Usage', value: 0, unit: '%', status: 'excellent', trend: 'stable', icon: <HardDrive className="h-6 w-6" /> },
+    { name: 'GPU Tier', value: 0, unit: '', status: 'excellent', trend: 'stable', icon: <Zap className="h-6 w-6" /> }
   ]);
 
-  const [recentActivities] = useState<RecentActivity[]>([
-    {
-      id: '1',
-      type: 'project',
-      title: 'Project "Summer Campaign" exported',
-      description: '4K video exported successfully to MP4 format',
-      timestamp: '2 hours ago',
-      status: 'completed',
-      progress: 100
-    },
-    {
-      id: '2',
-      type: 'render',
-      title: 'Product Demo rendering',
-      description: 'Rendering 4K timeline with effects',
-      timestamp: '4 hours ago',
-      status: 'in-progress',
-      progress: 75
-    },
-    {
-      id: '3',
-      type: 'project',
-      title: 'Project "Product Demo" started',
-      description: 'New project created with 4K timeline',
-      timestamp: '6 hours ago',
-      status: 'in-progress',
-      progress: 30
-    },
-    {
-      id: '4',
-      type: 'backup',
-      title: 'Auto backup completed',
-      description: 'Project files backed up to cloud storage',
-      timestamp: '8 hours ago',
-      status: 'completed',
-      progress: 100
-    },
-    {
-      id: '5',
-      type: 'import',
-      title: 'Media imported',
-      description: '15 video clips imported from external drive',
-      timestamp: '1 day ago',
-      status: 'completed',
-      progress: 100
-    },
-    {
-      id: '6',
-      type: 'share',
-      title: 'Project shared with team',
-      description: 'Summer Campaign shared via cloud link',
-      timestamp: '1 day ago',
-      status: 'completed',
-      progress: 100
+  // Run REAL system detection on mount
+  useEffect(() => {
+    const runDetection = async () => {
+      setIsLoadingSystem(true);
+      try {
+        // 1. Detect system info (uses REAL browser APIs)
+        const detected: DetectedSystemInfo = await detectSystemInfo();
+
+        // Calculate page uptime
+        const perfTiming = performance.now();
+        const uptimeSeconds = Math.floor(perfTiming / 1000);
+        const uptimeMin = Math.floor(uptimeSeconds / 60);
+        const uptimeHours = Math.floor(uptimeMin / 60);
+        let uptimeStr = '';
+        if (uptimeHours > 0) uptimeStr += `${uptimeHours}h `;
+        if (uptimeMin % 60 > 0) uptimeStr += `${uptimeMin % 60}m `;
+        uptimeStr += `${uptimeSeconds % 60}s`;
+
+        setSystemInfo({
+          os: detected.os,
+          ram: detected.totalMemory,
+          storage: detected.storage.total !== 'Not available'
+            ? `${detected.storage.total} total (${detected.storage.free} free)`
+            : 'Browser restricted',
+          gpu: detected.gpu,
+          cpu: detected.cpu,
+          cpuCores: detected.cpuCores,
+          uptime: `Session: ${uptimeStr}`,
+          architecture: detected.architecture,
+          browser: `${detected.browser} v${detected.browserVersion}`,
+          screenResolution: `${detected.screenResolution} @ ${detected.devicePixelRatio}x`,
+          network: detected.network.online 
+            ? `Online${detected.network.downlink !== 'Not available' ? ` • ${detected.network.downlink}` : ''}${detected.network.rtt !== 'Not available' ? ` • ${detected.network.rtt} latency` : ''}`
+            : 'Offline',
+          online: detected.network.online
+        });
+
+        // 2. Get REAL performance metrics
+        const metrics: DetectedPerformanceMetrics = await getPerformanceMetrics();
+
+        const getStatus = (val: number): 'excellent' | 'good' | 'warning' | 'critical' => {
+          if (val <= 25) return 'excellent';
+          if (val <= 50) return 'good';
+          if (val <= 75) return 'warning';
+          return 'critical';
+        };
+
+        setPerformanceMetrics([
+          {
+            name: 'CPU Load',
+            value: metrics.cpuUsage,
+            unit: '%',
+            status: getStatus(metrics.cpuUsage),
+            trend: metrics.cpuUsage < 30 ? 'stable' : metrics.cpuUsage < 60 ? 'up' : 'up',
+            icon: <Cpu className="h-6 w-6" />
+          },
+          {
+            name: 'Memory Pressure',
+            value: metrics.memoryUsage,
+            unit: '%',
+            status: getStatus(metrics.memoryUsage),
+            trend: 'stable',
+            icon: <Memory className="h-6 w-6" />
+          },
+          {
+            name: 'Storage Usage',
+            value: metrics.storageUsage,
+            unit: '%',
+            status: getStatus(metrics.storageUsage),
+            trend: 'stable',
+            icon: <HardDrive className="h-6 w-6" />
+          },
+          {
+            name: 'GPU Tier',
+            value: 0,
+            unit: metrics.gpuTier,
+            status: metrics.gpuTier === 'High-End' ? 'excellent' :
+                    metrics.gpuTier === 'Mid-Range' ? 'good' :
+                    metrics.gpuTier === 'Entry-Level' ? 'warning' : 'warning',
+            trend: 'stable',
+            icon: <Zap className="h-6 w-6" />
+          }
+        ]);
+
+        setSystemDetectedAt(new Date());
+      } catch (error) {
+        console.error('System detection failed:', error);
+      } finally {
+        setIsLoadingSystem(false);
+      }
+    };
+
+    runDetection();
+  }, []);
+
+  // Refresh performance metrics periodically
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const metrics = await getPerformanceMetrics();
+        const getStatus = (val: number): 'excellent' | 'good' | 'warning' | 'critical' => {
+          if (val <= 25) return 'excellent';
+          if (val <= 50) return 'good';
+          if (val <= 75) return 'warning';
+          return 'critical';
+        };
+
+        setPerformanceMetrics(prev => [
+          { ...prev[0], value: metrics.cpuUsage, status: getStatus(metrics.cpuUsage) },
+          { ...prev[1], value: metrics.memoryUsage, status: getStatus(metrics.memoryUsage) },
+          { ...prev[2], value: metrics.storageUsage, status: getStatus(metrics.storageUsage) },
+          prev[3] // GPU tier doesn't change
+        ]);
+      } catch (e) {
+        // silent
+      }
+    }, 10000); // Update every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Project stats persisted in localStorage
+  const [projectStats, setProjectStats] = useState<ProjectStats>(() => {
+    const saved = localStorage.getItem('vfp_project_stats');
+    return saved ? JSON.parse(saved) : {
+      totalProjects: 12,
+      activeProjects: 3,
+      completedProjects: 9,
+      totalHours: 142,
+      totalExports: 28,
+      totalImports: 156
+    };
+  });
+
+  // Media library stats persisted in localStorage
+  const [mediaLibrary, setMediaLibrary] = useState<MediaLibrary>(() => {
+    const saved = localStorage.getItem('vfp_media_library');
+    return saved ? JSON.parse(saved) : {
+      videos: 8,
+      images: 42,
+      audio: 12,
+      totalSize: '4.2 GB',
+      lastBackup: 'Recent'
+    };
+  });
+
+  // Recent activities from localStorage
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(() => {
+    const saved = localStorage.getItem('vfp_recent_activities');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { /* fall through */ }
     }
-  ]);
+    return [
+      {
+        id: 'welcome',
+        type: 'update' as const,
+        title: 'VideoFix Pro Initialized',
+        description: 'System scanning and management services are now active.',
+        timestamp: new Date().toLocaleString(),
+        status: 'completed' as const,
+        progress: 100
+      }
+    ];
+  });
+
+  // Synchronize dashboard and persist updates
+  useEffect(() => {
+    localStorage.setItem('vfp_project_stats', JSON.stringify(projectStats));
+    localStorage.setItem('vfp_media_library', JSON.stringify(mediaLibrary));
+    localStorage.setItem('vfp_recent_activities', JSON.stringify(recentActivities));
+  }, [projectStats, mediaLibrary, recentActivities]);
+
+  // Sync from storage events (for activities updated by other pages)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'vfp_recent_activities' && e.newValue) {
+        try { setRecentActivities(JSON.parse(e.newValue)); } catch (err) {}
+      }
+      if (e.key === 'vfp_project_stats' && e.newValue) {
+        try { setProjectStats(JSON.parse(e.newValue)); } catch (err) {}
+      }
+      if (e.key === 'vfp_media_library' && e.newValue) {
+        try { setMediaLibrary(JSON.parse(e.newValue)); } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Add status indicators for quick actions
   const getActionStatus = (actionId: string) => {
@@ -296,15 +409,15 @@ const Dashboard = () => {
       case 'new-project':
         return { available: true, count: projectStats.totalProjects };
       case 'software-downloads':
-        return { available: true, count: 15 }; // Available software
+        return { available: true, count: 15 };
       case 'plugin-manager':
-        return { available: true, count: 8 }; // Installed plugins
+        return { available: true, count: 8 };
       case 'media-library':
         return { available: true, count: mediaLibrary.videos + mediaLibrary.images + mediaLibrary.audio };
       case 'render-queue':
-        return { available: true, count: 2 }; // Active renders
+        return { available: true, count: 0 };
       case 'system-diagnostics':
-        return { available: true, count: 0 }; // No issues
+        return { available: true, count: 0 };
       default:
         return { available: true, count: 0 };
     }
@@ -312,67 +425,44 @@ const Dashboard = () => {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'project':
-        return <FileVideo className="h-4 w-4" />;
-      case 'export':
-        return <Download className="h-4 w-4" />;
-      case 'import':
-        return <Upload className="h-4 w-4" />;
-      case 'backup':
-        return <Shield className="h-4 w-4" />;
-      case 'update':
-        return <RefreshCw className="h-4 w-4" />;
-      case 'render':
-        return <Film className="h-4 w-4" />;
-      case 'edit':
-        return <Scissors className="h-4 w-4" />;
-      case 'share':
-        return <Globe className="h-4 w-4" />;
-      default:
-        return <Activity className="h-4 w-4" />;
+      case 'project': return <FileVideo className="h-4 w-4" />;
+      case 'export': return <Download className="h-4 w-4" />;
+      case 'import': return <Upload className="h-4 w-4" />;
+      case 'backup': return <Shield className="h-4 w-4" />;
+      case 'update': return <RefreshCw className="h-4 w-4" />;
+      case 'render': return <Film className="h-4 w-4" />;
+      case 'edit': return <Scissors className="h-4 w-4" />;
+      case 'share': return <Globe className="h-4 w-4" />;
+      default: return <Activity className="h-4 w-4" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'text-green-600 bg-green-100';
-      case 'in-progress':
-        return 'text-blue-600 bg-blue-100';
-      case 'failed':
-        return 'text-red-600 bg-red-100';
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
+      case 'completed': return 'text-green-600 bg-green-100';
+      case 'in-progress': return 'text-blue-600 bg-blue-100';
+      case 'failed': return 'text-red-600 bg-red-100';
+      case 'pending': return 'text-yellow-600 bg-yellow-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
   const getPerformanceStatusColor = (status: string) => {
     switch (status) {
-      case 'excellent':
-        return 'text-green-600';
-      case 'good':
-        return 'text-blue-600';
-      case 'warning':
-        return 'text-yellow-600';
-      case 'critical':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
+      case 'excellent': return 'text-green-600';
+      case 'good': return 'text-blue-600';
+      case 'warning': return 'text-yellow-600';
+      case 'critical': return 'text-red-600';
+      default: return 'text-gray-600';
     }
   };
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'up':
-        return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'down':
-        return <TrendingDown className="h-4 w-4 text-red-600" />;
-      case 'stable':
-        return <BarChart3 className="h-4 w-4 text-blue-600" />;
-      default:
-        return <BarChart3 className="h-4 w-4 text-gray-600" />;
+      case 'up': return <TrendingUp className="h-4 w-4 text-green-600" />;
+      case 'down': return <TrendingDown className="h-4 w-4 text-red-600" />;
+      case 'stable': return <BarChart3 className="h-4 w-4 text-blue-600" />;
+      default: return <BarChart3 className="h-4 w-4 text-gray-600" />;
     }
   };
 
@@ -384,9 +474,33 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Video Editing Dashboard
           </h1>
-          <p className="text-gray-600">
-            Monitor your projects, system performance, and media library at a glance.
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-gray-600">
+              Real-time system monitoring and project overview
+            </p>
+            <div className="flex items-center space-x-3">
+              {isLoadingSystem ? (
+                <span className="flex items-center text-sm text-blue-600">
+                  <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                  Scanning system...
+                </span>
+              ) : (
+                <span className="flex items-center text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  System detected {systemDetectedAt ? `at ${systemDetectedAt.toLocaleTimeString()}` : ''}
+                </span>
+              )}
+              {systemInfo.online ? (
+                <span className="flex items-center text-sm text-green-600">
+                  <Wifi className="h-4 w-4 mr-1" /> Online
+                </span>
+              ) : (
+                <span className="flex items-center text-sm text-red-600">
+                  <WifiOff className="h-4 w-4 mr-1" /> Offline
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -418,11 +532,11 @@ const Dashboard = () => {
           <div className="bg-white p-6 rounded-xl shadow-sm border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Hours</p>
-                <p className="text-2xl font-bold text-gray-900">{projectStats.totalHours}h</p>
+                <p className="text-sm font-medium text-gray-600">CPU Cores</p>
+                <p className="text-2xl font-bold text-gray-900">{systemInfo.cpuCores || '...'}</p>
               </div>
               <div className="p-3 bg-purple-100 rounded-lg">
-                <Clock className="h-6 w-6 text-purple-600" />
+                <Cpu className="h-6 w-6 text-purple-600" />
               </div>
             </div>
           </div>
@@ -455,7 +569,17 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">System Health</p>
-                <p className="text-2xl font-bold text-green-600">Excellent</p>
+                <p className={`text-2xl font-bold ${
+                  isLoadingSystem ? 'text-gray-400' :
+                  performanceMetrics[0]?.status === 'excellent' ? 'text-green-600' :
+                  performanceMetrics[0]?.status === 'good' ? 'text-blue-600' :
+                  performanceMetrics[0]?.status === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                }`}>
+                  {isLoadingSystem ? 'Scanning...' :
+                   performanceMetrics[0]?.status === 'excellent' ? 'Excellent' :
+                   performanceMetrics[0]?.status === 'good' ? 'Good' :
+                   performanceMetrics[0]?.status === 'warning' ? 'Warning' : 'Critical'}
+                </p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
                 <CheckCircle className="h-6 w-6 text-green-600" />
@@ -519,10 +643,15 @@ const Dashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* System Overview */}
+          {/* System Overview — now shows REAL data */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">System Overview</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">System Overview</h2>
+                {isLoadingSystem && (
+                  <RefreshCw className="h-5 w-5 text-blue-600 animate-spin" />
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -546,7 +675,15 @@ const Dashboard = () => {
                       <HardDrive className="h-5 w-5 text-purple-600" />
                       <span className="font-medium text-gray-700">Storage</span>
                     </div>
-                    <span className="text-sm text-gray-600">{systemInfo.storage}</span>
+                    <span className="text-sm text-gray-600 text-right max-w-[200px] truncate" title={systemInfo.storage}>{systemInfo.storage}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Globe className="h-5 w-5 text-teal-600" />
+                      <span className="font-medium text-gray-700">Browser</span>
+                    </div>
+                    <span className="text-sm text-gray-600">{systemInfo.browser}</span>
                   </div>
                 </div>
                 
@@ -556,7 +693,7 @@ const Dashboard = () => {
                       <Zap className="h-5 w-5 text-yellow-600" />
                       <span className="font-medium text-gray-700">GPU</span>
                     </div>
-                    <span className="text-sm text-gray-600">{systemInfo.gpu}</span>
+                    <span className="text-sm text-gray-600 text-right max-w-[200px] truncate" title={systemInfo.gpu}>{systemInfo.gpu}</span>
                   </div>
                   
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -569,10 +706,22 @@ const Dashboard = () => {
                   
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-3">
-                      <Clock className="h-5 w-5 text-indigo-600" />
-                      <span className="font-medium text-gray-700">Uptime</span>
+                      <Monitor className="h-5 w-5 text-pink-600" />
+                      <span className="font-medium text-gray-700">Display</span>
                     </div>
-                    <span className="text-sm text-gray-600">{systemInfo.uptime}</span>
+                    <span className="text-sm text-gray-600">{systemInfo.screenResolution}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      {systemInfo.online ? (
+                        <Wifi className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <WifiOff className="h-5 w-5 text-red-600" />
+                      )}
+                      <span className="font-medium text-gray-700">Network</span>
+                    </div>
+                    <span className="text-sm text-gray-600 text-right max-w-[200px] truncate" title={systemInfo.network}>{systemInfo.network}</span>
                   </div>
                 </div>
               </div>
@@ -626,9 +775,12 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Performance Metrics */}
+        {/* Performance Metrics — now REAL data */}
         <div className="mt-8 bg-white rounded-xl shadow-sm border p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Performance Metrics</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Performance Metrics</h2>
+            <span className="text-xs text-gray-500">Live — refreshes every 10s</span>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {performanceMetrics.map((metric) => (
               <div key={metric.name} className="text-center">
@@ -639,7 +791,7 @@ const Dashboard = () => {
                     </div>
                 <h3 className="font-semibold text-gray-900 mb-1">{metric.name}</h3>
                 <p className={`text-2xl font-bold ${getPerformanceStatusColor(metric.status)}`}>
-                  {metric.value}{metric.unit}
+                  {metric.name === 'GPU Tier' ? metric.unit : `${metric.value}${metric.unit}`}
                 </p>
                 <div className="flex items-center justify-center space-x-1 mt-2">
                   {getTrendIcon(metric.trend)}
@@ -654,33 +806,40 @@ const Dashboard = () => {
         <div className="mt-8 bg-white rounded-xl shadow-sm border p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
           <div className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <div className="flex-shrink-0 mt-1">
-                  {getActivityIcon(activity.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                  <p className="text-xs text-gray-600">{activity.description}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-500">{activity.timestamp}</span>
-                    <div className="flex items-center space-x-2">
-                      {activity.progress !== undefined && activity.status === 'in-progress' && (
-                        <div className="w-16 bg-gray-200 rounded-full h-1">
-                          <div 
-                            className="bg-blue-600 h-1 rounded-full" 
-                            style={{ width: `${activity.progress}%` }}
-                          ></div>
+            {recentActivities.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Activity className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p>No recent activity. Start by creating a project or running diagnostics!</p>
+              </div>
+            ) : (
+              recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <div className="flex-shrink-0 mt-1">
+                    {getActivityIcon(activity.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                    <p className="text-xs text-gray-600">{activity.description}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-gray-500">{activity.timestamp}</span>
+                      <div className="flex items-center space-x-2">
+                        {activity.progress !== undefined && activity.status === 'in-progress' && (
+                          <div className="w-16 bg-gray-200 rounded-full h-1">
+                            <div 
+                              className="bg-blue-600 h-1 rounded-full" 
+                              style={{ width: `${activity.progress}%` }}
+                            ></div>
           </div>
         )}
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(activity.status)}`}>
-                        {activity.status}
-                      </span>
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(activity.status)}`}>
+                          {activity.status}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

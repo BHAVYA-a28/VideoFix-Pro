@@ -14,6 +14,7 @@ import ProjectManager from './pages/ProjectManager';
 import MediaLibrary from './pages/MediaLibrary';
 import RenderQueue from './pages/RenderQueue';
 import SystemDiagnostics from './pages/SystemDiagnostics';
+import Payment from './pages/Payment';
 import FirebaseExample from './components/FirebaseExample';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -41,6 +42,7 @@ function App() {
               <Route path="/projects/new" element={<ProjectManager />} />
               <Route path="/media" element={<MediaLibrary />} />
               <Route path="/render" element={<RenderQueue />} />
+              <Route path="/payment" element={<Payment />} />
               <Route path="/diagnostics" element={<SystemDiagnostics />} />
               <Route path="/firebase" element={<FirebaseExample />} />
             </Routes>

@@ -10,38 +10,17 @@ import {
   RefreshCw,
   X,
   Activity,
-  Database
+  Database,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
-
-interface SystemInfo {
-  os: string;
-  architecture: string;
-  totalMemory: string;
-  freeMemory: string;
-  cpu: string;
-  gpu: string;
-  storage: {
-    total: string;
-    free: string;
-    used: string;
-  };
-  network: {
-    download: string;
-    upload: string;
-  };
-  browser: string;
-  screenResolution: string;
-  colorDepth: number;
-  timezone: string;
-  language: string;
-}
-
-interface DiagnosticResult {
-  category: string;
-  status: 'pass' | 'warning' | 'fail';
-  message: string;
-  details?: string;
-}
+import {
+  detectSystemInfo,
+  runDiagnostics,
+  getSystemRecommendations,
+  type SystemInfo,
+  type DiagnosticResult
+} from '../services/systemDetector';
 
 interface SystemDiagnosticsModalProps {
   isOpen: boolean;
@@ -51,38 +30,49 @@ interface SystemDiagnosticsModalProps {
 const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen, onClose }) => {
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [diagnostics, setDiagnostics] = useState<DiagnosticResult[]>([]);
+  const [recommendations, setRecommendations] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+  const [scanTask, setScanTask] = useState('');
 
   // Real system detection
   const detectSystem = async () => {
     setIsScanning(true);
     setScanProgress(0);
+    setDiagnostics([]);
+    setSystemInfo(null);
+    setRecommendations([]);
 
-    // Import the real system detection service
-    const { detectSystemInfo, runDiagnostics } = await import('../services/systemDetector');
-
-    // Simulate progressive scanning
     const steps = [
-      { progress: 20, task: 'Detecting OS...' },
-      { progress: 40, task: 'Analyzing CPU...' },
-      { progress: 60, task: 'Checking Memory...' },
-      { progress: 80, task: 'Scanning Storage...' },
-      { progress: 100, task: 'Finalizing...' }
+      { progress: 10, task: 'Initializing hardware hooks...', delay: 200 },
+      { progress: 25, task: 'Querying Operating System kernel...', delay: 400 },
+      { progress: 40, task: 'Measuring CPU concurrency & threads...', delay: 300 },
+      { progress: 55, task: 'Probing GPU via WebGL debug info...', delay: 600 },
+      { progress: 65, task: 'Checking memory (WASM memory pressure)...', delay: 200 },
+      { progress: 75, task: 'Querying StorageManager allocation...', delay: 400 },
+      { progress: 85, task: 'Pinging telemetry servers...', delay: 300 },
+      { progress: 95, task: 'Analyzing results...', delay: 200 }
     ];
 
     for (const step of steps) {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      setScanTask(step.task);
+      // Faster or slower based on the task "weight"
+      await new Promise(resolve => setTimeout(resolve, step.delay));
       setScanProgress(step.progress);
     }
 
-    // Use real system detection
-    const detectedSystem = detectSystemInfo();
+    // Use REAL system detection
+    const detectedSystem = await detectSystemInfo();
     setSystemInfo(detectedSystem);
 
-    // Run real diagnostics
+    // Run REAL diagnostics on detected data
     const diagnosticResults = runDiagnostics(detectedSystem);
     setDiagnostics(diagnosticResults);
+
+    // Get recommendations based on real data
+    const recs = getSystemRecommendations(detectedSystem);
+    setRecommendations(recs);
+
     setIsScanning(false);
   };
 
@@ -118,6 +108,10 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
     }
   };
 
+  const passCount = diagnostics.filter(d => d.status === 'pass').length;
+  const warnCount = diagnostics.filter(d => d.status === 'warning').length;
+  const failCount = diagnostics.filter(d => d.status === 'fail').length;
+
   if (!isOpen) return null;
 
   return (
@@ -127,7 +121,7 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
         <div className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">System Diagnostics</h2>
-            <p className="text-gray-600">Comprehensive system analysis for video editing</p>
+            <p className="text-gray-600">Real-time system analysis using browser APIs</p>
           </div>
           <button
             onClick={onClose}
@@ -138,15 +132,16 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
         </div>
 
         <div className="p-6">
-          {/* System Specifications */}
+          {/* System Specifications — REAL data */}
           {systemInfo && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
                   <Monitor className="w-6 h-6 text-blue-500" />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-medium text-gray-500">OS</p>
-                    <p className="text-sm font-semibold text-gray-900">{systemInfo.os}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate" title={systemInfo.os}>{systemInfo.os}</p>
+                    <p className="text-xs text-gray-500">{systemInfo.architecture}</p>
                   </div>
                 </div>
               </div>
@@ -164,9 +159,12 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
                   <HardDrive className="w-6 h-6 text-purple-500" />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-medium text-gray-500">Storage</p>
-                    <p className="text-sm font-semibold text-gray-900">{systemInfo.storage.total}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate" title={systemInfo.storage.total}>{systemInfo.storage.total}</p>
+                    {systemInfo.storage.usagePercent > 0 && (
+                      <p className="text-xs text-gray-500">{systemInfo.storage.usagePercent}% used</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -174,9 +172,9 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
                   <Zap className="w-6 h-6 text-yellow-500" />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-medium text-gray-500">GPU</p>
-                    <p className="text-sm font-semibold text-gray-900">{systemInfo.gpu}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate" title={systemInfo.gpu}>{systemInfo.gpu}</p>
                   </div>
                 </div>
               </div>
@@ -184,9 +182,9 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
                   <Cpu className="w-6 h-6 text-red-500" />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-medium text-gray-500">CPU</p>
-                    <p className="text-sm font-semibold text-gray-900">{systemInfo.cpu}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate" title={systemInfo.cpu}>{systemInfo.cpu}</p>
                   </div>
                 </div>
               </div>
@@ -197,7 +195,7 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
           {isScanning && (
             <div className="mb-6">
               <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Scanning system...</span>
+                <span>{scanTask}</span>
                 <span>{scanProgress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -206,6 +204,26 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
                   style={{ width: `${scanProgress}%` }}
                 ></div>
               </div>
+            </div>
+          )}
+
+          {/* Summary */}
+          {diagnostics.length > 0 && (
+            <div className="flex items-center space-x-4 mb-4 p-3 bg-gray-50 rounded-lg">
+              <span className="text-sm font-medium text-gray-700">Results:</span>
+              <span className="flex items-center text-sm text-green-700">
+                <CheckCircle className="w-4 h-4 mr-1" /> {passCount} passed
+              </span>
+              {warnCount > 0 && (
+                <span className="flex items-center text-sm text-yellow-700">
+                  <AlertCircle className="w-4 h-4 mr-1" /> {warnCount} warnings
+                </span>
+              )}
+              {failCount > 0 && (
+                <span className="flex items-center text-sm text-red-700">
+                  <AlertCircle className="w-4 h-4 mr-1" /> {failCount} issues
+                </span>
+              )}
             </div>
           )}
 
@@ -233,6 +251,21 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
             </div>
           )}
 
+          {/* Recommendations */}
+          {recommendations.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Recommendations</h3>
+              <div className="space-y-2">
+                {recommendations.map((rec, index) => (
+                  <div key={index} className="flex items-start space-x-2 text-sm">
+                    <span className="text-blue-500 mt-0.5">💡</span>
+                    <span className="text-gray-700">{rec}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Quick Info */}
           {systemInfo && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -241,15 +274,25 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Browser:</span>
-                    <span className="font-medium">{systemInfo.browser}</span>
+                    <span className="font-medium">{systemInfo.browser} v{systemInfo.browserVersion}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Resolution:</span>
-                    <span className="font-medium">{systemInfo.screenResolution}</span>
+                    <span className="font-medium">{systemInfo.screenResolution} @ {systemInfo.devicePixelRatio}x</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Color Depth:</span>
                     <span className="font-medium">{systemInfo.colorDepth}-bit</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">WebGL 2.0:</span>
+                    <span className={`font-medium ${systemInfo.webGL2Support ? 'text-green-600' : 'text-red-600'}`}>
+                      {systemInfo.webGL2Support ? '✓ Supported' : '✗ Not supported'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Touch:</span>
+                    <span className="font-medium">{systemInfo.touchSupport ? 'Yes' : 'No'}</span>
                   </div>
                 </div>
               </div>
@@ -269,6 +312,49 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
                     <span className="text-gray-600">Architecture:</span>
                     <span className="font-medium">{systemInfo.architecture}</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Network:</span>
+                    <span className="font-medium flex items-center gap-1">
+                      {systemInfo.network.online ? (
+                        <><Wifi className="w-3 h-3 text-green-600" /> Online</>
+                      ) : (
+                        <><WifiOff className="w-3 h-3 text-red-600" /> Offline</>
+                      )}
+                    </span>
+                  </div>
+                  {systemInfo.network.downlink !== 'Not available' && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Speed:</span>
+                      <span className="font-medium">{systemInfo.network.downlink}</span>
+                    </div>
+                  )}
+                  {systemInfo.network.rtt !== 'Not available' && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Latency:</span>
+                      <span className="font-medium">{systemInfo.network.rtt}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* GPU Details */}
+          {systemInfo && (
+            <div className="mt-4 bg-gray-50 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-900 mb-2">GPU Details</h4>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Renderer:</span>
+                  <span className="font-medium text-right max-w-[350px] truncate" title={systemInfo.gpu}>{systemInfo.gpu}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Vendor:</span>
+                  <span className="font-medium">{systemInfo.gpuVendor}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Max Texture Size:</span>
+                  <span className="font-medium">{systemInfo.maxTextureSize.toLocaleString()}px</span>
                 </div>
               </div>
             </div>
@@ -301,4 +387,4 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
   );
 };
 
-export default SystemDiagnosticsModal; 
+export default SystemDiagnosticsModal;

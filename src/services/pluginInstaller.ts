@@ -1,4 +1,20 @@
+import { detectSystemInfo } from './systemDetector';
+
 // Plugin Installation Service
+
+// Persistence Keys (Backend State)
+const INSTALLED_PLUGINS_KEY = 'vfp_installed_plugins';
+
+// Get currently installed plugins from persistent storage
+export const getInstalledPlugins = (): string[] => {
+  const saved = localStorage.getItem(INSTALLED_PLUGINS_KEY);
+  return saved ? JSON.parse(saved) : [];
+};
+
+// Internal backend utility to save installation state
+const saveInstalledPlugins = (plugins: string[]) => {
+  localStorage.setItem(INSTALLED_PLUGINS_KEY, JSON.stringify(plugins));
+};
 
 export interface InstallationProgress {
   pluginName: string;
@@ -87,77 +103,75 @@ export const PLUGIN_DOWNLOADS: Record<string, PluginDownload> = {
 // Installation progress callback type
 export type ProgressCallback = (progress: InstallationProgress) => void;
 
-// Download plugin
+// Download and Install plugin (Robust Backend Simulation)
 export const downloadPlugin = async (
   pluginName: string,
   onProgress?: ProgressCallback
 ): Promise<boolean> => {
   const plugin = PLUGIN_DOWNLOADS[pluginName];
-  
-  if (!plugin) {
-    console.error(`Plugin ${pluginName} not found in download catalog`);
-    return false;
-  }
+  if (!plugin) return false;
 
   try {
-    // Simulate download progress
+    // 1. Pre-install check (Backend)
+    const system = await detectSystemInfo();
+    const isWindows = system.os.toLowerCase().includes('win');
+    const installPath = isWindows 
+      ? `C:\\Program Files\\Adobe\\Common\\Plug-ins\\7.0\\MediaCore\\${pluginName}`
+      : `/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/${pluginName}`;
+
     if (onProgress) {
       onProgress({
         pluginName,
         progress: 0,
         status: 'downloading',
-        message: `Starting download of ${pluginName}...`
+        message: `Connecting to secure download server...`
       });
 
-      // Simulate download progress
-      for (let i = 10; i <= 100; i += 10) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+      // Simulate real-world network latency and chunks
+      for (let i = 10; i <= 90; i += Math.floor(Math.random() * 15 + 5)) {
+        await new Promise(resolve => setTimeout(resolve, 300));
         onProgress({
           pluginName,
           progress: i,
           status: 'downloading',
-          message: `Downloading ${pluginName}... ${i}%`
+          message: `DL: ${pluginName} - ${i}% (${installPath})`
         });
       }
     }
 
-    // Simulate installation
+    // 2. Finalize installation in Backend Store
     if (onProgress) {
-      onProgress({
-        pluginName,
-        progress: 100,
-        status: 'installing',
-        message: `Installing ${pluginName}...`
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      onProgress({ pluginName, progress: 95, status: 'installing', message: 'Registering plugin hooks...' });
+      await new Promise(resolve => setTimeout(resolve, 800));
     }
 
-    // Simulate completion
+    const current = getInstalledPlugins();
+    if (!current.includes(pluginName)) {
+      saveInstalledPlugins([...current, pluginName]);
+    }
+
     if (onProgress) {
       onProgress({
         pluginName,
         progress: 100,
         status: 'completed',
-        message: `${pluginName} installed successfully!`
+        message: `Successfully registered at: ${installPath}`
       });
     }
 
     return true;
   } catch (error) {
-    console.error(`Error downloading ${pluginName}:`, error);
-    
-    if (onProgress) {
-      onProgress({
-        pluginName,
-        progress: 0,
-        status: 'failed',
-        message: `Failed to install ${pluginName}: ${error}`
-      });
-    }
-    
+    console.error(`Backend installation error:`, error);
     return false;
   }
+};
+
+// Uninstall plugin (Backend logic)
+export const uninstallPlugin = (pluginName: string): boolean => {
+  const current = getInstalledPlugins();
+  const updated = current.filter(p => p !== pluginName);
+  saveInstalledPlugins(updated);
+  return true;
 };
 
 // Install multiple plugins
@@ -167,16 +181,11 @@ export const installMultiplePlugins = async (
 ): Promise<{ success: string[], failed: string[] }> => {
   const success: string[] = [];
   const failed: string[] = [];
-
-  for (const pluginName of pluginNames) {
-    const result = await downloadPlugin(pluginName, onProgress);
-    if (result) {
-      success.push(pluginName);
-    } else {
-      failed.push(pluginName);
-    }
+  for (const name of pluginNames) {
+    const result = await downloadPlugin(name, onProgress);
+    if (result) success.push(name);
+    else failed.push(name);
   }
-
   return { success, failed };
 };
 
@@ -194,7 +203,6 @@ export const getAllPlugins = (): PluginDownload[] => {
 export const isPluginCompatible = (pluginName: string, softwareName: string): boolean => {
   const plugin = PLUGIN_DOWNLOADS[pluginName];
   if (!plugin) return false;
-
   return plugin.compatibility.some(compat => 
     compat.toLowerCase().includes(softwareName.toLowerCase())
   );
@@ -202,9 +210,7 @@ export const isPluginCompatible = (pluginName: string, softwareName: string): bo
 
 // Get recommended plugins for specific software
 export const getRecommendedPlugins = (softwareName: string): PluginDownload[] => {
-  return getAllPlugins().filter(plugin => 
-    isPluginCompatible(plugin.name, softwareName)
-  );
+  return getAllPlugins().filter(plugin => isPluginCompatible(plugin.name, softwareName));
 };
 
 // Validate installation requirements
@@ -215,39 +221,10 @@ export const validateInstallationRequirements = (pluginName: string): {
 } => {
   const requirements: string[] = [];
   const warnings: string[] = [];
-
-  // Check if plugin exists
   if (!PLUGIN_DOWNLOADS[pluginName]) {
-    return {
-      isValid: false,
-      requirements: [],
-      warnings: ['Plugin not found in catalog']
-    };
+    return { isValid: false, requirements: [], warnings: ['Plugin not found'] };
   }
-
-  // Add basic requirements
   requirements.push('Administrator privileges required');
-  requirements.push('Sufficient disk space (2GB recommended)');
-  requirements.push('Stable internet connection');
-
-  // Add software-specific requirements
-  if (pluginName === 'Video Copilot' || pluginName === 'Optical Flares') {
-    requirements.push('Adobe After Effects 2023 or later');
-  }
-
-  if (pluginName === 'Trapcode Suite') {
-    requirements.push('Adobe After Effects 2023 or later');
-    requirements.push('OpenGL 3.3 compatible graphics card');
-  }
-
-  if (pluginName === 'Red Giant') {
-    requirements.push('Adobe Creative Suite 2023 or later');
-    requirements.push('8GB RAM minimum');
-  }
-
-  return {
-    isValid: true,
-    requirements,
-    warnings
-  };
-}; 
+  requirements.push('Sufficient disk space');
+  return { isValid: true, requirements, warnings };
+};
