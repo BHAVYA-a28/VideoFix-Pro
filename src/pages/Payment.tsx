@@ -216,30 +216,30 @@ const Payment: React.FC = () => {
 
         {/* Checkout Section */}
         {selectedPlan && (
-          <div id="checkout-form" className="max-w-4xl mx-auto scroll-mt-24">
-            <div className="bg-white rounded-4xl shadow-3xl overflow-hidden border border-gray-100 flex flex-col md:flex-row">
+          <div id="checkout-form" className="max-w-4xl mx-auto scroll-mt-24 px-2 sm:px-0">
+            <div className="bg-white rounded-3xl md:rounded-4xl shadow-3xl overflow-hidden border border-gray-100 flex flex-col lg:flex-row">
               {/* Left: Summary */}
-              <div className="md:w-5/12 bg-gray-900 p-10 text-white">
-                <div className="flex items-center space-x-3 mb-10">
+              <div className="lg:w-5/12 bg-gray-900 p-8 md:p-10 text-white">
+                <div className="flex items-center space-x-3 mb-8 md:mb-10">
                   <ShieldCheck className="w-8 h-8 text-indigo-400" />
                   <span className="text-xl font-black tracking-tight">Checkout</span>
                 </div>
                 
-                <div className="mb-12">
+                <div className="mb-10 md:mb-12">
                   <p className="text-gray-400 text-sm uppercase font-bold tracking-widest mb-2">Order Summary</p>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-lg font-bold">{PLANS.find(p => p.id === selectedPlan)?.name}</span>
                     <span className="text-lg font-black">{PLANS.find(p => p.id === selectedPlan)?.price}</span>
                   </div>
-                  <p className="text-gray-500 text-sm">Full access to professional toolkit and priority updates.</p>
+                  <p className="text-gray-500 text-sm leading-relaxed">Full access to professional toolkit and priority updates.</p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
                   <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-2xl">
                     <Lock className="w-5 h-5 text-indigo-400" />
                     <div>
                       <p className="text-xs font-bold text-gray-300">Bank-Grade Encryption</p>
-                      <p className="text-[10px] text-gray-500">256-bit SSL Secure Payment</p>
+                      <p className="text-[10px] text-gray-500">256-bit SSL Secure</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-2xl">
@@ -253,7 +253,7 @@ const Payment: React.FC = () => {
               </div>
 
               {/* Right: Payment Form */}
-              <div className="md:w-7/12 p-10 bg-white">
+              <div className="lg:w-7/12 p-8 md:p-10 bg-white">
                 <form onSubmit={handlePayment} className="space-y-6">
                   <div>
                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Cardholder Name</label>

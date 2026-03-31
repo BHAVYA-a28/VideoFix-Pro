@@ -167,90 +167,155 @@ const PluginManager: React.FC = () => {
 
   const isWindows = detectionResult?.systemInfo.os.toLowerCase().includes('win') || false;
 
+  // SAFE CALCULATED LISTING
+  const pluginsToDisplay = React.useMemo(() => {
+    try {
+      if (activeTab === 'detected') {
+        return (detectionResult?.detectedPlugins || [])
+          .map(d => getAllPlugins().find(p => p.name === d.name))
+          .filter((p): p is PluginDownload => !!p);
+      }
+      
+      if (activeTab === 'recommended') {
+        return getRecommendedPluginsForSystem() || [];
+      }
+      
+      return getFilteredPlugins() || [];
+    } catch (err) {
+      console.error('[VFP-Plugin-Manager] Listing error:', err);
+      return [];
+    }
+  }, [activeTab, detectionResult, searchTerm]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Plugin Manager</h1>
-              <p className="text-gray-600">Detect and install video editing software plugins automatically</p>
+              <p className="text-gray-600">Enterprise-grade diagnostic engine for video software extensions</p>
             </div>
             <button
               onClick={scanSystem}
               disabled={scanning}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95 disabled:opacity-50"
             >
               <RefreshCw className={scanning ? 'w-5 h-5 animate-spin' : 'w-5 h-5'} />
-              <span>{scanning ? 'Scanning...' : 'Scan System'}</span>
+              <span>{scanning ? 'Analyzing System...' : 'Initiate Scan'}</span>
             </button>
           </div>
 
           {detectionResult && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 flex items-center mb-2"><Package className="w-4 h-4 mr-2" /> Detected Software</h3>
-                <p className="text-2xl font-bold text-blue-600">{detectionResult.videoEditingSoftware.length}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                <h3 className="font-bold text-blue-900 text-xs uppercase tracking-wider flex items-center mb-2">
+                  <Package className="w-4 h-4 mr-2" /> Target Software
+                </h3>
+                <p className="text-3xl font-extrabold text-blue-600">{detectionResult.videoEditingSoftware.length}</p>
               </div>
-              <div className="bg-green-50 rounded-lg p-4">
-                <h3 className="font-semibold text-green-900 flex items-center mb-2"><CheckCircle className="w-4 h-4 mr-2" /> Installed Plugins</h3>
-                <p className="text-2xl font-bold text-green-600">{detectionResult.detectedPlugins.length}</p>
+              <div className="bg-green-50 border border-green-100 rounded-xl p-4">
+                <h3 className="font-bold text-green-900 text-xs uppercase tracking-wider flex items-center mb-2">
+                  <CheckCircle className="w-4 h-4 mr-2" /> Verified Plugins
+                </h3>
+                <p className="text-3xl font-extrabold text-green-600">{detectionResult.detectedPlugins.length}</p>
               </div>
-              <div className="bg-orange-50 rounded-lg p-4">
-                <h3 className="font-semibold text-orange-900 flex items-center mb-2"><AlertTriangle className="w-4 h-4 mr-2" /> System OS</h3>
+              <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
+                <h3 className="font-bold text-orange-900 text-xs uppercase tracking-wider flex items-center mb-2">
+                  <Monitor className="w-4 h-4 mr-2" /> Deployment OS
+                </h3>
                 <p className="text-lg font-bold text-orange-600 truncate">{detectionResult.systemInfo.os}</p>
               </div>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h2 className="text-xl font-bold mb-4">Detected Software</h2>
-              {loading ? <div className="text-center py-8 animate-pulse">Scanning...</div> : 
-               detectionResult?.videoEditingSoftware.length === 0 ? <p className="text-gray-500">None detected</p> : 
-               <div className="space-y-4">
-                 {detectionResult?.videoEditingSoftware.map(s => (
-                   <div key={s.name} className="border rounded-lg p-4">
-                     <h3 className="font-bold">{s.name}</h3>
-                     <p className="text-xs text-gray-500 mt-1 truncate">{s.installPath}</p>
-                   </div>
-                 ))}
-               </div>
-              }
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+          {/* Mobile-First: Software List moves above on small screens */}
+          <div className="order-2 lg:order-1 lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-xl p-4 md:p-6 border border-gray-100 h-full">
+              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <Monitor className="w-5 h-5 mr-2 text-blue-600" />
+                <span>Host Software</span>
+              </h2>
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 animate-pulse rounded-xl"></div>)}
+                </div>
+              ) : 
+               detectionResult?.videoEditingSoftware.length === 0 ? (
+                <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-400 font-medium">No host found</p>
+                </div>
+               ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+                  {detectionResult?.videoEditingSoftware.map(s => (
+                    <div key={s.name} className="border border-gray-100 bg-gray-50 rounded-xl p-4 transition-all hover:bg-white hover:shadow-md group">
+                      <h3 className="font-bold text-sm text-gray-900 group-hover:text-blue-600 transition-colors">{s.name}</h3>
+                      <div className="flex items-center mt-2 text-[10px] font-mono text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-100">
+                        <CheckCircle className="w-3 h-3 mr-1 text-green-500" /> {s.version}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+               )}
             </div>
           </div>
 
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <div className="flex space-x-2 mb-6">
+          <div className="order-1 lg:order-2 lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-xl p-4 md:p-6 border border-gray-100">
+              {/* Tab Navigation - Better Mobile View */}
+              <div className="flex items-center p-1.5 bg-gray-100 rounded-2xl mb-6 overflow-x-auto scroller-hide">
                 {(['detected', 'recommended', 'available'] as const).map(tab => (
-                  <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-lg capitalize ${activeTab === tab ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                    {tab}
+                  <button 
+                    key={tab} 
+                    onClick={() => setActiveTab(tab)} 
+                    className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs md:text-sm transition-all whitespace-nowrap ${
+                      activeTab === tab 
+                        ? 'bg-white text-blue-600 shadow-lg' 
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </button>
                 ))}
               </div>
 
+              {/* Advanced Search */}
               <div className="relative mb-6">
-                <Search className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-                <input type="text" placeholder="Search plugins..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-lg" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input 
+                  type="text" 
+                  placeholder="Filter plugins by name or host..." 
+                  value={searchTerm} 
+                  onChange={e => setSearchTerm(e.target.value)} 
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 font-medium text-sm md:text-base placeholder:text-gray-400" 
+                />
               </div>
 
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                {(activeTab === 'detected' ? (detectionResult?.detectedPlugins?.map(d => getAllPlugins().find(p => p.name === d.name)).filter(Boolean) || []) :
-                  activeTab === 'recommended' ? getRecommendedPluginsForSystem() :
-                  getFilteredPlugins()).map((p: any) => (
-                    <PluginCard 
-                      key={p.name} 
-                      plugin={p} 
-                      onInstall={() => handleInstallPlugin(p.name)} 
-                      onUninstall={() => handleUninstallPlugin(p.name)}
-                      installing={installing} 
-                      isWindows={isWindows}
-                      installationProgress={installationProgress.find(pr => pr.pluginName === p.name)}
-                    />
-                  ))}
+              {/* Plugin Distribution List */}
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1 custom-scrollbar">
+                {pluginsToDisplay.length === 0 ? (
+                  <div className="text-center py-20 bg-gray-50 rounded-2xl">
+                    <Search className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                    <p className="text-gray-400 font-bold">No results found</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {pluginsToDisplay.map((p) => (
+                      <PluginCard 
+                        key={p.name} 
+                        plugin={p} 
+                        onInstall={() => handleInstallPlugin(p.name)} 
+                        onUninstall={() => handleUninstallPlugin(p.name)}
+                        installing={installing} 
+                        isWindows={isWindows}
+                        installationProgress={installationProgress.find(pr => pr.pluginName === p.name)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
