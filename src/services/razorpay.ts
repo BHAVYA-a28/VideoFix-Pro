@@ -72,7 +72,7 @@ export const createPaymentOrder = async (paymentDetails: PaymentDetails): Promis
   try {
     // In a real application, you would make an API call to your backend
     // to create the order on your server
-    const response = await fetch('/api/create-order', {
+    const response = await fetch('/api/v1/billing/create-order', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -148,12 +148,12 @@ export const initializePayment = async (
     };
 
     // Initialize Razorpay
-    const razorpay = new (window as { Razorpay: new (options: RazorpayOptions) => void }).Razorpay(options);
-    razorpay.open();
+    const rzp = new window.Razorpay(options);
+    rzp.open();
 
   } catch (error) {
     console.error('Error initializing payment:', error);
-    onFailure(error);
+    onFailure(error instanceof Error ? error : new Error('Unknown payment initialization error'));
   }
 };
 
@@ -164,7 +164,7 @@ export const verifyPayment = async (
   signature: string
 ): Promise<boolean> => {
   try {
-    const response = await fetch('/api/verify-payment', {
+    const response = await fetch('/api/v1/billing/verify-payment', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -203,7 +203,7 @@ export const formatAmount = (amount: number, currency: string = 'INR'): string =
 
 // Get payment status
 export const getPaymentStatus = (paymentId: string): Promise<{ status: string; amount: number; currency: string } | null> => {
-  return fetch(`/api/payment-status/${paymentId}`)
+  return fetch(`/api/v1/billing/payment-status/${paymentId}`)
     .then(response => response.json())
     .catch(error => {
       console.error('Error fetching payment status:', error);

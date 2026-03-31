@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Star, Users, Clock, Shield } from 'lucide-react';
 import SystemDiagnosticsModal from '../components/SystemDiagnosticsModal';

@@ -9,6 +9,18 @@ export default defineConfig({
     host: true,
     open: true
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+          ui: ['lucide-react', 'framer-motion']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  },
   optimizeDeps: {
     exclude: ['lucide-react'],
   },

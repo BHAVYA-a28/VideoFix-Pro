@@ -4,7 +4,6 @@ import {
 } from '../services/systemDetector';
 import { 
   downloadPlugin, 
-  installMultiplePlugins, 
   getAllPlugins, 
   getRecommendedPlugins,
   getInstalledPlugins,
@@ -18,13 +17,10 @@ import {
 } from '../services/softwareDownloader';
 import { 
   Search, 
-  Download, 
   CheckCircle, 
-  AlertTriangle, 
   Monitor, 
   Package, 
   RefreshCw,
-  Pause,
   Trash2
 } from 'lucide-react';
 
@@ -55,7 +51,6 @@ const PluginManager: React.FC = () => {
   const [detectionResult, setDetectionResult] = useState<DetectionResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const [selectedPlugins] = useState<string[]>([]);
   const [installationProgress, setInstallationProgress] = useState<InstallationProgress[]>([]);
   const [installing, setInstalling] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -131,20 +126,6 @@ const PluginManager: React.FC = () => {
     }
   };
 
-  const handleInstallPlugins = async () => {
-    if (selectedPlugins.length === 0) return;
-    setInstalling(true);
-    const onProgress = (progress: InstallationProgress) => {
-      setInstallationProgress(prev => {
-        const existing = prev.find(p => p.pluginName === progress.pluginName);
-        if (existing) return prev.map(p => p.pluginName === progress.pluginName ? progress : p);
-        return [...prev, progress];
-      });
-    };
-    await installMultiplePlugins(selectedPlugins, onProgress);
-    setInstalling(false);
-    await scanSystem();
-  };
 
   const getFilteredPlugins = () => {
     const allPlugins = getAllPlugins();

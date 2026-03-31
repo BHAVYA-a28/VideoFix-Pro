@@ -415,6 +415,6 @@ export const openOfficialWebsite = (softwareName: string) => {
   const software = SOFTWARE_DOWNLOADS[softwareName];
   if (software) window.open(software.officialUrl, '_blank');
 };
-export const validateDownloadRequirements = (softwareName: string) => {
+export const validateDownloadRequirements = (_softwareName: string) => {
   return { isValid: true, requirements: ['Admin rights', 'Stable SSL'], warnings: [] };
 };

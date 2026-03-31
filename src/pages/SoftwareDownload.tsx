@@ -8,12 +8,10 @@ import {
   AlertCircle, 
   ExternalLink,
   Search,
-  Filter,
   Star,
   Clock,
   FileText,
   Globe,
-  Shield,
   RefreshCw
 } from 'lucide-react';
 import {
@@ -37,7 +35,7 @@ const SoftwareDownload = () => {
   const [filteredSoftware, setFilteredSoftware] = useState<SoftwareDownload[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedLicense, setSelectedLicense] = useState<string>('all');
+  const [selectedLicense] = useState<string>('all');
   const [downloadingStatus, setDownloadingStatus] = useState<Record<string, {
     progress: number;
     status: string;
@@ -250,11 +248,6 @@ const SoftwareDownload = () => {
     { id: 'legacy-optimized', name: 'Legacy Repo' }
   ];
 
-  const licenses = [
-    { id: 'all', name: 'All' },
-    { id: 'free', name: 'Free' },
-    { id: 'pro', name: 'Enterprise' }
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
