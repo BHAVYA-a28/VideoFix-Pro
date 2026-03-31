@@ -14,8 +14,8 @@ export interface SoftwareDownload {
     storage: string;
     graphics: string;
   };
-  license: 'free' | 'trial' | 'paid' | 'subscription';
-  category: 'video-editing' | 'motion-graphics' | 'color-grading' | 'compositing';
+  license: 'free' | 'trial' | 'paid' | 'subscription' | 'pro';
+  category: 'video-editing' | 'motion-graphics' | 'color-grading' | 'compositing' | 'production' | 'audio' | 'legacy-optimized';
 }
 
 export interface DownloadStatus {
@@ -338,10 +338,10 @@ export const checkSystemCompatibility = (
   const platformMatch = software.systemRequirements.os.some(req => {
     const reqLower = req.toLowerCase();
     const hasVersionReq = req.includes('+');
-    
+
     const basicMatch = (systemOS.includes('win') && reqLower.includes('windows')) ||
-                       (systemOS.includes('mac') && reqLower.includes('macos')) ||
-                       (systemOS.includes('linux') && reqLower.includes('linux'));
+      (systemOS.includes('mac') && reqLower.includes('macos')) ||
+      (systemOS.includes('linux') && reqLower.includes('linux'));
 
     if (basicMatch && hasVersionReq) {
       const requiredVersion = req.match(/[\d.]+/)?.[0];
@@ -350,7 +350,7 @@ export const checkSystemCompatibility = (
         return compareVersions(currentVersion, requiredVersion);
       }
     }
-    
+
     return basicMatch;
   });
 
@@ -373,7 +373,7 @@ export const downloadSoftware = async (
   try {
     const system = await detectSystemInfo();
     const isWindows = system.os.toLowerCase().includes('win');
-    const localPath = isWindows 
+    const localPath = isWindows
       ? `C:\\Users\\Public\\Downloads\\VideoFixPro\\${softwareName.replace(/\s+/g, '_')}`
       : `/Users/Shared/Downloads/VideoFixPro/${softwareName.replace(/\s+/g, '_')}`;
 

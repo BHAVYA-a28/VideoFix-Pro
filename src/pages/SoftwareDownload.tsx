@@ -172,7 +172,7 @@ const SoftwareDownload = () => {
     }
 
     // Standard managed simulation for Pro/Paid/Complex software
-    await downloadSoftware(software.name, (progress) => {
+    await downloadSoftware(software.name, async (progress) => {
       setDownloadingStatus(prev => ({
         ...prev,
         [software.name]: {
@@ -185,10 +185,20 @@ const SoftwareDownload = () => {
         }
       }));
 
-      // 4. Authentic Pro Handoff: Trigger REAL official installer on Completion
-      if (progress.progress === 100) {
-        if (software.downloadUrl) {
-          // Direct official handoff
+      // 4. Authentic Native Handoff: Execute via Electron if available
+      if (progress.progress === 100 && progress.localPath) {
+        // @ts-ignore: Electron IPC bridge
+        if (window.require && window.require('electron')) {
+          try {
+            // @ts-ignore
+            const { ipcRenderer } = window.require('electron');
+            console.log('[VFP] Native Handoff: Executing installer at', progress.localPath);
+            await ipcRenderer.invoke('execute-installer', progress.localPath);
+          } catch (nativeErr) {
+            console.error('[VFP] Native execution failed:', nativeErr);
+          }
+        } else if (software.downloadUrl) {
+          // Standard browser fallback
           window.location.href = software.downloadUrl;
         }
       }
@@ -233,90 +243,74 @@ const SoftwareDownload = () => {
   };
 
   const categories = [
-    { id: 'all', name: 'All Categories' },
-    { id: 'video-editing', name: 'Video Editing' },
-    { id: 'motion-graphics', name: 'Motion Graphics' },
-    { id: 'color-grading', name: 'Color Grading' },
-    { id: 'compositing', name: 'Compositing' }
+    { id: 'all', name: 'All' },
+    { id: 'video-editing', name: 'Editing' },
+    { id: 'motion-graphics', name: 'Motion' },
+    { id: 'compositing', name: 'Compositing' },
+    { id: 'legacy-optimized', name: 'Legacy Repo' }
   ];
 
   const licenses = [
-    { id: 'all', name: 'All Licenses' },
+    { id: 'all', name: 'All' },
     { id: 'free', name: 'Free' },
-    { id: 'trial', name: 'Free Trial' },
-    { id: 'paid', name: 'Paid' },
-    { id: 'subscription', name: 'Subscription' }
+    { id: 'pro', name: 'Enterprise' }
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header - Mobile Friendly */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Software Downloads</h1>
-              <p className="text-gray-600 mt-1">Download professional video editing software directly from official sources</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Software Distribution</h1>
+              <p className="text-sm text-gray-600 mt-1">Direct access to professional tools and legacy-optimized repositories</p>
             </div>
             <button
               onClick={() => setShowSystemInfo(true)}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl hover:bg-blue-700 transition-all font-medium shadow-md md:w-auto w-full"
             >
-              <Monitor className="h-5 w-5" />
-              <span>System Info</span>
+              <Monitor className="h-4 w-4" />
+              <span>Diagnostic Check</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      {/* Modern Tab Navigation (Responsive) */}
+      <div className="bg-white border-b sticky top-16 z-40">
+        <div className="max-w-7xl mx-auto px-4 overflow-x-auto scroller-hide">
+          <div className="flex space-x-8 h-14">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex-shrink-0 flex items-center h-full border-b-2 font-medium transition-all ${
+                  selectedCategory === cat.id 
+                    ? 'border-blue-600 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Filters & Search - Mobile Stacked */}
+      <div className="bg-gray-50 border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4 lg:px-8">
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Search software..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-gray-400" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* License Filter */}
-            <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-gray-400" />
-              <select
-                value={selectedLicense}
-                onChange={(e) => setSelectedLicense(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {licenses.map(license => (
-                  <option key={license.id} value={license.id}>
-                    {license.name}
-                  </option>
-                ))}
-              </select>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Search tools or repositories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
         </div>

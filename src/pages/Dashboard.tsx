@@ -775,31 +775,34 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Performance Metrics — now REAL data */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Performance Metrics</h2>
-            <span className="text-xs text-gray-500">Live — refreshes every 10s</span>
+        {/* Performance Metrics — Responsive & Adaptive */}
+        <div className="mt-8 bg-white rounded-xl shadow-sm border p-4 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Live Performance Telemetry</h2>
+            <div className="flex items-center space-x-2 text-[10px] uppercase tracking-wider font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+              <Activity className="h-3 w-3 animate-pulse" />
+              <span>Real-time Hardware Monitoring</span>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
             {performanceMetrics.map((metric) => (
-              <div key={metric.name} className="text-center">
-                <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mx-auto mb-3">
+              <div key={metric.name} className="text-center group p-4 border rounded-xl hover:border-blue-200 transition-all">
+                <div className="flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gray-50 rounded-full mx-auto mb-3 group-hover:scale-110 transition-transform">
                   <div className={getPerformanceStatusColor(metric.status)}>
                     {metric.icon}
                   </div>
-                    </div>
-                <h3 className="font-semibold text-gray-900 mb-1">{metric.name}</h3>
-                <p className={`text-2xl font-bold ${getPerformanceStatusColor(metric.status)}`}>
+                </div>
+                <h3 className="text-xs md:text-sm font-semibold text-gray-500 mb-1">{metric.name}</h3>
+                <p className={`text-lg md:text-2xl font-bold ${getPerformanceStatusColor(metric.status)}`}>
                   {metric.name === 'GPU Tier' ? metric.unit : `${metric.value}${metric.unit}`}
                 </p>
                 <div className="flex items-center justify-center space-x-1 mt-2">
                   {getTrendIcon(metric.trend)}
-                  <span className="text-sm text-gray-600 capitalize">{metric.status}</span>
+                  <span className="text-[10px] text-gray-500 font-bold uppercase">{metric.status}</span>
                 </div>
               </div>
             ))}
-            </div>
+          </div>
         </div>
 
         {/* Recent Activity */}

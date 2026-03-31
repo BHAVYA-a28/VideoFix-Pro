@@ -238,7 +238,7 @@ const PluginManager: React.FC = () => {
               </div>
 
               <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                {(activeTab === 'detected' ? detectionResult?.detectedPlugins.map(d => getAllPlugins().find(p => p.name === d.name)).filter(Boolean) :
+                {(activeTab === 'detected' ? (detectionResult?.detectedPlugins?.map(d => getAllPlugins().find(p => p.name === d.name)).filter(Boolean) || []) :
                   activeTab === 'recommended' ? getRecommendedPluginsForSystem() :
                   getFilteredPlugins()).map((p: any) => (
                     <PluginCard 
