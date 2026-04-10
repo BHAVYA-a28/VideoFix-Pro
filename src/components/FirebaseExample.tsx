@@ -15,12 +15,20 @@ import {
   orderBy 
 } from 'firebase/firestore';
 
+interface Message {
+  id: string;
+  text: string;
+  userId: string;
+  email: string | null;
+  timestamp: any; // Using any for raw Firestore data, will cast in load
+}
+
 const FirebaseExample: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Array<{ id: string; text: string; userId: string; email: string | null; timestamp: Date }>>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     // Listen for auth state changes
@@ -80,10 +88,13 @@ const FirebaseExample: React.FC = () => {
     try {
       const q = query(collection(db, 'messages'), orderBy('timestamp', 'desc'));
       const querySnapshot = await getDocs(q);
-      const messagesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const messagesData = querySnapshot.docs.map(doc => {
+        const data = doc.data() as Omit<Message, 'id'>;
+        return {
+          id: doc.id,
+          ...data
+        };
+      });
       setMessages(messagesData);
     } catch (error: unknown) {
       console.error('Error loading messages:', error);
@@ -173,7 +184,9 @@ const FirebaseExample: React.FC = () => {
                     <div key={msg.id} className="p-2 bg-gray-100 rounded text-sm">
                       <p><strong>{msg.email}:</strong> {msg.text}</p>
                       <p className="text-xs text-gray-500">
-                        {msg.timestamp?.toDate?.()?.toLocaleString() || 'Unknown time'}
+                        {msg.timestamp instanceof Date 
+                          ? msg.timestamp.toLocaleString() 
+                          : msg.timestamp?.toDate?.()?.toLocaleString() || 'Unknown time'}
                       </p>
                     </div>
                   ))}

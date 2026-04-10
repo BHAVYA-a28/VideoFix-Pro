@@ -70,3 +70,35 @@ ipcMain.handle('get-system-detailed', async () => {
     processor: process.env.PROCESSOR_IDENTIFIER || 'Advanced CPU'
   };
 });
+
+// Real Software Detection Bridge (PowerShell)
+ipcMain.handle('detect-software', async () => {
+  return new Promise((resolve) => {
+    const scriptPath = path.join(app.getAppPath(), 'scripts/detect-software.ps1');
+    const command = `powershell.exe -ExecutionPolicy Bypass -File "${scriptPath}"`;
+
+    exec(command, (error, stdout) => {
+      if (error) {
+        console.error(`[VFP-Native] Detection Error: ${error.message}`);
+        // Return empty results on error but stay graceful
+        resolve({
+          SystemInfo: { OS: process.platform, Architecture: process.arch, TotalMemory: 0, FreeSpace: 0 },
+          VideoEditingSoftware: [],
+          AllSoftware: []
+        });
+      } else {
+        try {
+          const result = JSON.parse(stdout);
+          resolve(result);
+        } catch (parseError) {
+          console.error(`[VFP-Native] JSON Parse Error: ${parseError}`);
+          resolve({
+            SystemInfo: { OS: process.platform, Architecture: process.arch, TotalMemory: 0, FreeSpace: 0 },
+            VideoEditingSoftware: [],
+            AllSoftware: []
+          });
+        }
+      }
+    });
+  });
+});

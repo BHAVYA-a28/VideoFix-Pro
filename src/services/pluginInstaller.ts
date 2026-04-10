@@ -30,6 +30,7 @@ export interface PluginDownload {
   version: string;
   description: string;
   compatibility: string[];
+  tier: 'free' | 'pro';
 }
 
 // Plugin download sources and information
@@ -40,7 +41,8 @@ export const PLUGIN_DOWNLOADS: Record<string, PluginDownload> = {
     size: '500MB',
     version: '2024.1',
     description: 'Professional visual effects and motion graphics plugins',
-    compatibility: ['Adobe After Effects 2024', 'Adobe After Effects 2023']
+    compatibility: ['Adobe After Effects 2024', 'Adobe After Effects 2023'],
+    tier: 'pro'
   },
   'Trapcode Suite': {
     name: 'Trapcode Suite',
@@ -48,7 +50,8 @@ export const PLUGIN_DOWNLOADS: Record<string, PluginDownload> = {
     size: '2.1GB',
     version: '2024.1',
     description: 'Particle systems, 3D objects, and motion graphics',
-    compatibility: ['Adobe After Effects 2024', 'Adobe After Effects 2023']
+    compatibility: ['Adobe After Effects 2024', 'Adobe After Effects 2023'],
+    tier: 'pro'
   },
   'Red Giant': {
     name: 'Red Giant',
@@ -56,7 +59,8 @@ export const PLUGIN_DOWNLOADS: Record<string, PluginDownload> = {
     size: '1.8GB',
     version: '2024.1',
     description: 'Color grading, visual effects, and motion graphics',
-    compatibility: ['Adobe After Effects 2024', 'Adobe Premiere Pro 2024']
+    compatibility: ['Adobe After Effects 2024', 'Adobe Premiere Pro 2024'],
+    tier: 'pro'
   },
   'Sapphire': {
     name: 'Sapphire',
@@ -64,7 +68,8 @@ export const PLUGIN_DOWNLOADS: Record<string, PluginDownload> = {
     size: '3.2GB',
     version: '2024.1',
     description: 'Professional visual effects and transitions',
-    compatibility: ['Adobe After Effects 2024', 'Adobe Premiere Pro 2024']
+    compatibility: ['Adobe After Effects 2024', 'Adobe Premiere Pro 2024'],
+    tier: 'pro'
   },
   'Twixtor': {
     name: 'Twixtor',
@@ -72,7 +77,8 @@ export const PLUGIN_DOWNLOADS: Record<string, PluginDownload> = {
     size: '150MB',
     version: '7.0',
     description: 'Time remapping and motion interpolation',
-    compatibility: ['Adobe After Effects 2024', 'Adobe Premiere Pro 2024']
+    compatibility: ['Adobe After Effects 2024', 'Adobe Premiere Pro 2024'],
+    tier: 'free'
   },
   'Optical Flares': {
     name: 'Optical Flares',
@@ -80,7 +86,8 @@ export const PLUGIN_DOWNLOADS: Record<string, PluginDownload> = {
     size: '300MB',
     version: '1.3.5',
     description: 'Professional lens flares and light effects',
-    compatibility: ['Adobe After Effects 2024', 'Adobe After Effects 2023']
+    compatibility: ['Adobe After Effects 2024', 'Adobe After Effects 2023'],
+    tier: 'free'
   },
   'Element 3D': {
     name: 'Element 3D',
@@ -88,7 +95,8 @@ export const PLUGIN_DOWNLOADS: Record<string, PluginDownload> = {
     size: '800MB',
     version: '2.2.2',
     description: '3D object integration for After Effects',
-    compatibility: ['Adobe After Effects 2024', 'Adobe After Effects 2023']
+    compatibility: ['Adobe After Effects 2024', 'Adobe After Effects 2023'],
+    tier: 'pro'
   },
   'Particular': {
     name: 'Particular',
@@ -96,7 +104,8 @@ export const PLUGIN_DOWNLOADS: Record<string, PluginDownload> = {
     size: '450MB',
     version: '5.0',
     description: 'Advanced particle system for motion graphics',
-    compatibility: ['Adobe After Effects 2024', 'Adobe After Effects 2023']
+    compatibility: ['Adobe After Effects 2024', 'Adobe After Effects 2023'],
+    tier: 'pro'
   }
 };
 

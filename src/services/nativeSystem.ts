@@ -13,12 +13,50 @@ export const getNativeSystemInfo = async (): Promise<NativeSystemInfo> => {
   // Leverage our robust systemDetector
   const system = await detectSystemInfo();
   
+  let nativeData = null;
+  let softwareData = null;
+
+  // @ts-ignore
+  if (window.require && window.require('electron')) {
+    try {
+      // @ts-ignore
+      const { ipcRenderer } = window.require('electron');
+      // Parallel fetch for speed
+      const [detailed, apps] = await Promise.all([
+        ipcRenderer.invoke('get-system-detailed'),
+        ipcRenderer.invoke('detect-software')
+      ]);
+      nativeData = detailed;
+      softwareData = apps;
+    } catch (err) {
+      console.error('[VFP-Native] Bridge error:', err);
+    }
+  }
+
+  const sysInfo = softwareData?.SystemInfo;
+
   return {
-    os: system.os,
-    architecture: system.architecture,
-    ram: system.totalMemory, // "8 GB" etc
-    storage: system.storage.total,
-    graphics: system.gpu,
+    os: sysInfo?.OS || (nativeData?.platform === 'win32' ? 'Windows' : nativeData?.platform) || system.os,
+    architecture: sysInfo?.Architecture || nativeData?.arch || system.architecture,
+    ram: sysInfo?.TotalMemory ? `${sysInfo.TotalMemory} GB` : system.totalMemory,
+    storage: sysInfo?.FreeSpace ? `${sysInfo.FreeSpace} GB Free` : system.storage.total,
+    graphics: system.gpu, // GPU info is usually more reliable from Browser WebGL than raw WMI
     cores: navigator.hardwareConcurrency || 4
   };
+};
+
+export const getDetectedSoftware = async () => {
+  // @ts-ignore
+  if (window.require && window.require('electron')) {
+    try {
+      // @ts-ignore
+      const { ipcRenderer } = window.require('electron');
+      const result = await ipcRenderer.invoke('detect-software');
+      return result;
+    } catch (err) {
+      console.error('[VFP-Native] Detect software error:', err);
+      return null;
+    }
+  }
+  return null;
 };

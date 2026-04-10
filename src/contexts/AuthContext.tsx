@@ -5,6 +5,8 @@ import { auth } from '../firebase';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  plan: 'free' | 'pro';
+  upgrade: () => void;
   logout: () => Promise<void>;
 }
 
@@ -17,8 +19,13 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [plan, setPlan] = useState<'free' | 'pro'>('free');
 
   useEffect(() => {
+    // Initial load from local storage (mock backend)
+    const savedPlan = localStorage.getItem('vfp_subscription_tier');
+    if (savedPlan === 'pro') setPlan('pro');
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -26,6 +33,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     return () => unsubscribe();
   }, []);
+
+  const upgrade = () => {
+    setPlan('pro');
+    localStorage.setItem('vfp_subscription_tier', 'pro');
+  };
 
   const logout = async () => {
     try {
@@ -38,6 +50,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value = {
     user,
     loading,
+    plan,
+    upgrade,
     logout
   };
 

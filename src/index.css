@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html, body {
+  overflow: auto !important;
+  height: auto !important;
+  min-height: 100% !important;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure sticky elements don't block layout */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Restore utility for horizontal scrolling tabs if used */
+.scroller-hide::-webkit-scrollbar {
+  display: none;
+}
+.scroller-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

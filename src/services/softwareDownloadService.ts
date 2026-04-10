@@ -296,27 +296,6 @@ export const SOFTWARE_DOWNLOADS: Record<string, SoftwareDownload> = {
   }
 };
 
-// Internal Utilities for Compatibility Engine
-const normalizeToMB = (sizeStr: string): number => {
-  const value = parseFloat(sizeStr.match(/[\d.]+/)?.[0] || '0');
-  const unit = sizeStr.toLowerCase();
-  if (unit.includes('tb')) return value * 1024 * 1024;
-  if (unit.includes('gb')) return value * 1024;
-  return value;
-};
-
-const compareVersions = (current: string, required: string): boolean => {
-  const parse = (v: string) => v.split('.').map(n => parseInt(n) || 0);
-  const c = parse(current.replace(/[^\d.]/g, ''));
-  const r = parse(required.replace(/[^\d.]/g, ''));
-  for (let i = 0; i < Math.max(c.length, r.length); i++) {
-    if ((c[i] || 0) > (r[i] || 0)) return true;
-    if ((c[i] || 0) < (r[i] || 0)) return false;
-  }
-  return true;
-};
-
-// Core Backend Services
 export const getSystemInfo = async (): Promise<SystemInfo> => {
   const detailed = await detectSystemInfo();
   return {
@@ -335,26 +314,40 @@ export const checkSystemCompatibility = (
   const issues: string[] = [];
   const systemOS = systemInfo.os.toLowerCase();
 
+  const parse = (v: string) => v.split('.').map(n => parseInt(n) || 0);
+  const compareVersions = (current: string, required: string): boolean => {
+    const c = parse(current.replace(/[^\d.]/g, ''));
+    const r = parse(required.replace(/[^\d.]/g, ''));
+    for (let i = 0; i < Math.max(c.length, r.length); i++) {
+      if ((c[i] || 0) > (r[i] || 0)) return true;
+      if ((c[i] || 0) < (r[i] || 0)) return false;
+    }
+    return true;
+  };
+
   const platformMatch = software.systemRequirements.os.some(req => {
     const reqLower = req.toLowerCase();
-    const hasVersionReq = req.includes('+');
-
     const basicMatch = (systemOS.includes('win') && reqLower.includes('windows')) ||
       (systemOS.includes('mac') && reqLower.includes('macos')) ||
       (systemOS.includes('linux') && reqLower.includes('linux'));
 
-    if (basicMatch && hasVersionReq) {
+    if (basicMatch && req.includes('+')) {
       const requiredVersion = req.match(/[\d.]+/)?.[0];
       const currentVersion = systemOS.match(/[\d.]+/)?.[0] || '0';
-      if (requiredVersion) {
-        return compareVersions(currentVersion, requiredVersion);
-      }
+      if (requiredVersion) return compareVersions(currentVersion, requiredVersion);
     }
-
     return basicMatch;
   });
 
   if (!platformMatch) issues.push(`Unsupported OS: ${systemInfo.os}`);
+
+  const normalizeToMB = (sizeStr: string): number => {
+    const value = parseFloat(sizeStr.match(/[\d.]+/)?.[0] || '0');
+    const unit = sizeStr.toLowerCase();
+    if (unit.includes('tb')) return value * 1024 * 1024;
+    if (unit.includes('gb')) return value * 1024;
+    return value;
+  };
 
   const sysRAM = normalizeToMB(systemInfo.ram);
   const reqRAM = normalizeToMB(software.systemRequirements.ram);
@@ -374,8 +367,8 @@ export const downloadSoftware = async (
     const system = await detectSystemInfo();
     const isWindows = system.os.toLowerCase().includes('win');
     const localPath = isWindows
-      ? `C:\\Users\\Public\\Downloads\\VideoFixPro\\${softwareName.replace(/\s+/g, '_')}`
-      : `/Users/Shared/Downloads/VideoFixPro/${softwareName.replace(/\s+/g, '_')}`;
+      ? "C:\\Users\\Public\\Downloads\\VideoFixPro\\" + softwareName.replace(/\s+/g, '_')
+      : "/Users/Shared/Downloads/VideoFixPro/" + softwareName.replace(/\s+/g, '_');
 
     if (onProgress) {
       onProgress({ progress: 0, status: 'checking', message: 'Checking system resonance...', localPath });
@@ -386,9 +379,9 @@ export const downloadSoftware = async (
         onProgress({
           progress: i,
           status: 'downloading',
-          message: `Fetching bits to: ${localPath}`,
-          downloadSpeed: `${(Math.random() * 5 + 3).toFixed(1)} MB/s`,
-          estimatedTime: `${Math.ceil((100 - i) / 10)}s remaining`,
+          message: "Fetching bits to: " + localPath,
+          downloadSpeed: (Math.random() * 5 + 3).toFixed(1) + " MB/s",
+          estimatedTime: Math.ceil((100 - i) / 10) + "s remaining",
           localPath
         });
       }

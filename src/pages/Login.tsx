@@ -3,6 +3,7 @@ import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPa
 import { auth } from '../firebase';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, LogIn } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import DanceAnimation from '../components/DanceAnimation';
 
 const Login: React.FC = () => {
@@ -16,6 +17,14 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [resetSent, setResetSent] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

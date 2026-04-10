@@ -13,6 +13,7 @@ import MediaLibrary from './pages/MediaLibrary';
 import RenderQueue from './pages/RenderQueue';
 import SystemDiagnostics from './pages/SystemDiagnostics';
 import Payment from './pages/Payment';
+import NotFound from './pages/NotFound';
 import FirebaseExample from './components/FirebaseExample';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -43,6 +44,9 @@ function App() {
               <Route path="/payment" element={<Payment />} />
               <Route path="/diagnostics" element={<SystemDiagnostics />} />
               <Route path="/firebase" element={<FirebaseExample />} />
+              
+              {/* Catch-all redirection */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
         </div>

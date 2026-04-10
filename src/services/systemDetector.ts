@@ -62,148 +62,65 @@ const formatBytes = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-// Detect GPU using WebGL — this returns the REAL GPU name
-const detectGPU = (): { renderer: string; vendor: string; maxTextureSize: number; webgl2: boolean } => {
-  const result = { renderer: 'Unknown', vendor: 'Unknown', maxTextureSize: 0, webgl2: false };
-
+// --- Forensic Detection Logic ---
+const getGPU = () => {
   try {
     const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return { renderer: 'unavailable', vendor: 'unavailable', maxTextureSize: 0, webgl2: false };
+    
+    let webgl2 = false;
+    if (canvas.getContext('webgl2')) webgl2 = true;
 
-    // Try WebGL2 first
-    let gl: WebGLRenderingContext | WebGL2RenderingContext | null = canvas.getContext('webgl2') as WebGL2RenderingContext;
-    if (gl) {
-      result.webgl2 = true;
-    } else {
-      gl = canvas.getContext('webgl') as WebGLRenderingContext || canvas.getContext('experimental-webgl') as WebGLRenderingContext;
-    }
+    const ext = (gl as WebGLRenderingContext).getExtension('WEBGL_debug_renderer_info');
+    const maxTextureSize = (gl as WebGLRenderingContext).getParameter((gl as WebGLRenderingContext).MAX_TEXTURE_SIZE) || 0;
 
-    if (gl) {
-      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-      if (debugInfo) {
-        result.renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || 'Unknown';
-        result.vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || 'Unknown';
-      } else {
-        result.renderer = gl.getParameter(gl.RENDERER) || 'WebGL Compatible';
-        result.vendor = gl.getParameter(gl.VENDOR) || 'Unknown';
-      }
-      result.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE) || 0;
+    if (ext) {
+      return {
+        renderer: (gl as WebGLRenderingContext).getParameter(ext.UNMASKED_RENDERER_WEBGL),
+        vendor:   (gl as WebGLRenderingContext).getParameter(ext.UNMASKED_VENDOR_WEBGL),
+        maxTextureSize,
+        webgl2
+      };
     }
+    return { 
+      renderer: (gl as WebGLRenderingContext).getParameter((gl as WebGLRenderingContext).RENDERER), 
+      vendor: (gl as WebGLRenderingContext).getParameter((gl as WebGLRenderingContext).VENDOR),
+      maxTextureSize,
+      webgl2
+    };
   } catch (e) {
-    console.warn('GPU detection failed:', e);
+    return { renderer: 'blocked', vendor: 'blocked', maxTextureSize: 0, webgl2: false };
   }
-
-  return result;
 };
 
-// Detect OS with detailed version
-const detectOS = (userAgent: string): { os: string; version: string } => {
-  if (userAgent.includes('Windows NT 10.0')) {
-    // Windows 10 and 11 share NT 10.0 — check for newer builds heuristically
-    // navigator.userAgentData can distinguish in Chromium browsers
-    const uaData = (navigator as any).userAgentData;
-    if (uaData?.platform === 'Windows') {
-      return { os: 'Windows', version: '10/11' };
-    }
-    return { os: 'Windows', version: '10/11' };
-  }
-  if (userAgent.includes('Windows NT 6.3')) return { os: 'Windows', version: '8.1' };
-  if (userAgent.includes('Windows NT 6.2')) return { os: 'Windows', version: '8' };
-  if (userAgent.includes('Windows NT 6.1')) return { os: 'Windows', version: '7' };
-  if (userAgent.includes('Windows')) return { os: 'Windows', version: 'Unknown' };
-
-  if (userAgent.includes('Mac OS X')) {
-    const match = userAgent.match(/Mac OS X (\d+)[_.](\d+)[_.]?(\d+)?/);
-    if (match) {
-      return { os: 'macOS', version: `${match[1]}.${match[2]}${match[3] ? '.' + match[3] : ''}` };
-    }
-    return { os: 'macOS', version: 'Unknown' };
-  }
-
-  if (userAgent.includes('CrOS')) return { os: 'Chrome OS', version: 'Unknown' };
-  if (userAgent.includes('Linux')) return { os: 'Linux', version: 'Unknown' };
-  if (userAgent.includes('Android')) {
-    const match = userAgent.match(/Android (\d+\.?\d*)/);
-    return { os: 'Android', version: match ? match[1] : 'Unknown' };
-  }
-  if (userAgent.includes('iPhone') || userAgent.includes('iPad')) {
-    const match = userAgent.match(/OS (\d+)_(\d+)/);
-    return { os: 'iOS', version: match ? `${match[1]}.${match[2]}` : 'Unknown' };
-  }
-
-  return { os: 'Unknown', version: 'Unknown' };
+const getOS = () => {
+  const ua = navigator.userAgent;
+  if (/Windows NT 10/.test(ua))  return { os: 'Windows', version: '10/11' };
+  if (/Android/.test(ua))        { const m = ua.match(/Android ([\d.]+)/); return { os: 'Android', version: m?.[1] ?? '' }; }
+  if (/iPhone|iPad/.test(ua))    { const m = ua.match(/OS ([\d_]+)/);      return { os: 'iOS', version: m?.[1].replace(/_/g, '.') ?? '' }; }
+  if (/Mac OS X/.test(ua))       { const m = ua.match(/Mac OS X ([\d_]+)/);return { os: 'macOS', version: m?.[1].replace(/_/g, '.') ?? '' }; }
+  if (/Linux/.test(ua))          return { os: 'Linux', version: '' };
+  return { os: 'Unknown', version: '' };
 };
 
-// Detect browser with version
-const detectBrowser = (userAgent: string): { name: string; version: string } => {
-  // Order matters — check more specific patterns first
-  if (userAgent.includes('Edg/')) {
-    const match = userAgent.match(/Edg\/(\d+\.?\d*)/);
-    return { name: 'Microsoft Edge', version: match ? match[1] : 'Unknown' };
-  }
-  if (userAgent.includes('OPR/') || userAgent.includes('Opera')) {
-    const match = userAgent.match(/(?:OPR|Opera)\/(\d+\.?\d*)/);
-    return { name: 'Opera', version: match ? match[1] : 'Unknown' };
-  }
-  if (userAgent.includes('Brave')) {
-    return { name: 'Brave', version: 'Unknown' };
-  }
-  if (userAgent.includes('Chrome/')) {
-    const match = userAgent.match(/Chrome\/(\d+\.?\d*)/);
-    return { name: 'Google Chrome', version: match ? match[1] : 'Unknown' };
-  }
-  if (userAgent.includes('Firefox/')) {
-    const match = userAgent.match(/Firefox\/(\d+\.?\d*)/);
-    return { name: 'Mozilla Firefox', version: match ? match[1] : 'Unknown' };
-  }
-  if (userAgent.includes('Safari/') && !userAgent.includes('Chrome')) {
-    const match = userAgent.match(/Version\/(\d+\.?\d*)/);
-    return { name: 'Safari', version: match ? match[1] : 'Unknown' };
-  }
-
-  return { name: 'Unknown', version: 'Unknown' };
+const getBrowser = () => {
+  const ua = navigator.userAgent;
+  if (/Edg\//.test(ua))    { const m = ua.match(/Edg\/([\d.]+)/);     return { name: 'Edge', version: m?.[1].split('.')[0] ?? '' }; }
+  if (/OPR\//.test(ua))    { const m = ua.match(/OPR\/([\d.]+)/);      return { name: 'Opera', version: m?.[1].split('.')[0] ?? '' }; }
+  if (/Chrome\//.test(ua)) { const m = ua.match(/Chrome\/([\d.]+)/);   return { name: 'Chrome', version: m?.[1].split('.')[0] ?? '' }; }
+  if (/Firefox\//.test(ua)){ const m = ua.match(/Firefox\/([\d.]+)/);  return { name: 'Firefox', version: m?.[1].split('.')[0] ?? '' }; }
+  if (/Safari\//.test(ua)) { const m = ua.match(/Version\/([\d.]+)/);  return { name: 'Safari', version: m?.[1].split('.')[0] ?? '' }; }
+  return { name: 'Unknown', version: '' };
 };
 
-// Detect CPU info from available APIs
-const detectCPU = (userAgent: string): { name: string; cores: number } => {
-  const cores = navigator.hardwareConcurrency || 0;
-  const platform = (navigator as any).userAgentData?.platform || navigator.platform || '';
-  const isMac = platform.toLowerCase().includes('mac') || userAgent.toLowerCase().includes('mac os x');
-
-  // Order of preference for name:
-  // 1. Specific brand in User Agent 
-  // 2. High-entropy model info (if we had it, but we can't get it sync)
-  // 3. Fallback to generic cores
-  
-  let name = `${cores}-Core Processor`;
-  
-  if (userAgent.includes('Intel')) {
-    const gen = userAgent.includes('Windows NT 10.0') ? ' (Gen 10+)' : '';
-    name = `Intel Core${gen} (${cores} cores)`;
-  } else if (userAgent.includes('AMD')) {
-    name = `AMD Ryzen (${cores} cores)`;
-  } else if (isMac && (userAgent.includes('Apple') || cores > 0)) {
-    name = `Apple Silicon (${cores} cores)`;
-  } else if (cores > 0) {
-    name = `${cores}-Core ${platform.replace('Win32', 'x64')} Processor`;
-  } else {
-    name = 'Unknown Processor';
-  }
-
-  return { name, cores };
-};
-
-// Get storage estimate from the Storage Manager API (real data!)
 const getStorageEstimate = async (): Promise<{ total: number; used: number; free: number }> => {
   try {
     if (navigator.storage && navigator.storage.estimate) {
       const estimate = await navigator.storage.estimate();
-      const quota = estimate.quota || 0;   // Total available space (browser allocation)
-      const usage = estimate.usage || 0;   // Space already used
-      return {
-        total: quota,
-        used: usage,
-        free: quota - usage
-      };
+      const quota = estimate.quota || 0;
+      const usage = estimate.usage || 0;
+      return { total: quota, used: usage, free: quota - usage };
     }
   } catch (e) {
     console.warn('Storage estimate failed:', e);
@@ -211,39 +128,37 @@ const getStorageEstimate = async (): Promise<{ total: number; used: number; free
   return { total: 0, used: 0, free: 0 };
 };
 
-// Get network information from the Network Information API (real data!)
-const getNetworkInfo = (): { type: string; downlink: number; effectiveType: string; rtt: number } => {
-  const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
-
-  if (connection) {
-    return {
-      type: connection.type || 'Unknown',
-      downlink: connection.downlink || 0,       // Mbps (real measurement)
-      effectiveType: connection.effectiveType || 'Unknown', // '4g', '3g', etc.
-      rtt: connection.rtt || 0                  // Round-trip time in ms (real)
-    };
-  }
-
-  return { type: 'Unknown', downlink: 0, effectiveType: 'Unknown', rtt: 0 };
+const getNetwork = () => {
+  // @ts-ignore
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  return {
+    type: conn?.effectiveType ?? 'unknown',
+    downlink: conn?.downlink || 0,
+    effectiveType: conn?.effectiveType || 'unknown',
+    rtt: conn?.rtt || 0,
+    saveData: conn?.saveData ?? false
+  };
 };
 
 // Main detection function — returns REAL system information
 export const detectSystemInfo = async (): Promise<SystemInfo> => {
-  const userAgent = navigator.userAgent;
-  const { os, version: osVersion } = detectOS(userAgent);
-  const { name: browserName, version: browserVersion } = detectBrowser(userAgent);
-  const { name: cpuName, cores: cpuCores } = detectCPU(userAgent);
-  const gpu = detectGPU();
+  const { os, version: osVersion } = getOS();
+  const { name: browserName, version: browserVersion } = getBrowser();
+  const cores = navigator.hardwareConcurrency || 0;
+  const cpuName = `${cores}-Core Processor`;
+  const gpu = getGPU();
   const storageData = await getStorageEstimate();
-  const networkData = getNetworkInfo();
+  const networkData = getNetwork();
 
   // Memory — navigator.deviceMemory is a real API (Chrome/Edge)
-  const deviceMemoryGB = (navigator as any).deviceMemory || 0;
+  // @ts-ignore
+  const deviceMemoryGB = navigator.deviceMemory || 0;
 
   // Architecture
-  const architecture = userAgent.includes('WOW64') || userAgent.includes('x64') || userAgent.includes('x86_64') || userAgent.includes('amd64')
+  const ua = navigator.userAgent;
+  const architecture = ua.includes('WOW64') || ua.includes('x64') || ua.includes('x86_64') || ua.includes('amd64')
     ? 'x64'
-    : userAgent.includes('arm') || userAgent.includes('aarch64')
+    : ua.includes('arm') || ua.includes('aarch64')
       ? 'ARM64'
       : 'x86';
 
@@ -259,7 +174,7 @@ export const detectSystemInfo = async (): Promise<SystemInfo> => {
     totalMemoryGB: deviceMemoryGB,
     freeMemory: 'N/A (browser restricted)',
     cpu: cpuName,
-    cpuCores,
+    cpuCores: cores,
     gpu: gpu.renderer,
     gpuVendor: gpu.vendor,
     storage: {
@@ -293,17 +208,19 @@ export const detectSystemInfo = async (): Promise<SystemInfo> => {
 
 // Synchronous version for backward compatibility (without storage which needs async)
 export const detectSystemInfoSync = (): Omit<SystemInfo, 'storage'> & { storage: { total: string; free: string; used: string; usagePercent: number } } => {
-  const userAgent = navigator.userAgent;
-  const { os, version: osVersion } = detectOS(userAgent);
-  const { name: browserName, version: browserVersion } = detectBrowser(userAgent);
-  const { name: cpuName, cores: cpuCores } = detectCPU(userAgent);
-  const gpu = detectGPU();
-  const networkData = getNetworkInfo();
-  const deviceMemoryGB = (navigator as any).deviceMemory || 0;
+  const { os, version: osVersion } = getOS();
+  const { name: browserName, version: browserVersion } = getBrowser();
+  const cores = navigator.hardwareConcurrency || 0;
+  const cpuName = `${cores}-Core Processor`;
+  const gpu = getGPU();
+  const networkData = getNetwork();
+  // @ts-ignore
+  const deviceMemoryGB = navigator.deviceMemory || 0;
 
-  const architecture = userAgent.includes('WOW64') || userAgent.includes('x64') || userAgent.includes('x86_64') || userAgent.includes('amd64')
+  const ua = navigator.userAgent;
+  const architecture = ua.includes('WOW64') || ua.includes('x64') || ua.includes('x86_64') || ua.includes('amd64')
     ? 'x64'
-    : userAgent.includes('arm') || userAgent.includes('aarch64')
+    : ua.includes('arm') || ua.includes('aarch64')
       ? 'ARM64'
       : 'x86';
 
@@ -315,7 +232,7 @@ export const detectSystemInfoSync = (): Omit<SystemInfo, 'storage'> & { storage:
     totalMemoryGB: deviceMemoryGB,
     freeMemory: 'N/A',
     cpu: cpuName,
-    cpuCores,
+    cpuCores: cores,
     gpu: gpu.renderer,
     gpuVendor: gpu.vendor,
     storage: {
@@ -392,7 +309,7 @@ export const getPerformanceMetrics = async (): Promise<PerformanceMetrics> => {
   }
 
   // GPU tier estimation based on max texture size and WebGL2 support
-  const gpu = detectGPU();
+  const gpu = getGPU();
   let gpuTier = 'Unknown';
   if (gpu.maxTextureSize >= 16384 && gpu.webgl2) {
     gpuTier = 'High-End';

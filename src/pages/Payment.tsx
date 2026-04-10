@@ -11,6 +11,8 @@ import {
   Award,
   RefreshCw
 } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import PaymentStatus from '../components/PaymentStatus';
 
 const PLANS = [
   {
@@ -67,6 +69,7 @@ const PLANS = [
 ];
 
 const Payment: React.FC = () => {
+  const { plan, upgrade, user } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -88,6 +91,14 @@ const Payment: React.FC = () => {
 
   const handlePayment = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      if (window.confirm('You must be logged in to process payments and upgrade your startup account. Redirect to login?')) {
+        window.location.href = '/login';
+      }
+      return;
+    }
+
     setIsProcessing(true);
     
     // Simulate payment logic
@@ -95,14 +106,17 @@ const Payment: React.FC = () => {
       setIsProcessing(false);
       setIsSuccess(true);
       
+      // REAL SaaS Logic: Upgrade the user's plan in context and storage
+      upgrade();
+      
       // Activity log
       const activities = JSON.parse(localStorage.getItem('vfp_recent_activities') || '[]');
-      const plan = PLANS.find(p => p.id === selectedPlan);
+      const planInfo = PLANS.find(p => p.id === selectedPlan);
       activities.unshift({
         id: Date.now().toString(),
         type: 'billing',
-        title: `Upgraded to ${plan?.name}`,
-        description: `Premium features are now active for your account.`,
+        title: `Upgraded to ${planInfo?.name}`,
+        description: `Premium features are now active for ${user?.email || 'your account'}.`,
         timestamp: new Date().toLocaleString(),
         status: 'completed',
         icon: 'credit-card'
@@ -152,10 +166,17 @@ const Payment: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-20 relative z-10">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-black text-gray-900 mb-6 tracking-tighter">Elevate Your Production <span className="text-indigo-600">Standard</span></h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto font-medium leading-relaxed">
-            Choose the core that powers your workflow. From solo creators to enterprise studios, 
-            unlock the full potential of VideoFix Pro diagnostics and management.
-          </p>
+          {plan === 'pro' ? (
+            <div className="bg-green-100 text-green-800 px-6 py-3 rounded-full inline-flex items-center space-x-2 font-bold mb-4 animate-bounce">
+              <ShieldCheck className="w-5 h-5" />
+              <span>You are currently on the Professional Plan</span>
+            </div>
+          ) : (
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto font-medium leading-relaxed">
+              Choose the core that powers your workflow. From solo creators to enterprise studios, 
+              unlock the full potential of VideoFix Pro diagnostics and management.
+            </p>
+          )}
         </div>
 
         {/* Pricing Cards */}
