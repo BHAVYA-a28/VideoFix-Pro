@@ -43,7 +43,7 @@ export interface PaymentDetails {
 
 // Razorpay configuration
 const RAZORPAY_CONFIG = {
-  key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_YOUR_TEST_KEY', // Replace with your test key
+  key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_YOUR_TEST_KEY', // Replace with your test key
   currency: 'INR',
   name: 'VideoFix Pro',
   theme: {

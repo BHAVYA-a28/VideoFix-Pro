@@ -1,11 +1,14 @@
+'use client';
+
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X, VideoIcon, User, LogOut } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useLocation();
+  const pathname = usePathname();
   const { user, logout } = useAuth();
 
   const navItems = [
@@ -17,14 +20,14 @@ const Header = () => {
     { name: 'Contact', path: '/contact' },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => pathname === path;
 
   return (
     <header className="bg-white shadow-lg relative z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <VideoIcon className="h-8 w-8 text-blue-600" />
             <span className="text-xl font-bold text-gray-900">VideoFix Pro</span>
           </Link>
@@ -34,7 +37,7 @@ const Header = () => {
             {navItems.map((item) => (
               <Link
                 key={item.name}
-                to={item.path}
+                href={item.path}
                 className={`px-3 py-2 text-sm font-medium transition-colors ${
                   isActive(item.path)
                     ? 'text-blue-600 border-b-2 border-blue-600'
@@ -67,13 +70,13 @@ const Header = () => {
             ) : (
               <>
                 <Link
-                  to="/login"
+                  href="/login"
                   className="text-gray-700 hover:text-blue-600 px-4 py-2 font-medium transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
-                  to="/signup"
+                  href="/signup"
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                 >
                   Sign Up
@@ -103,7 +106,7 @@ const Header = () => {
             {navItems.map((item) => (
               <Link
                 key={item.name}
-                to={item.path}
+                href={item.path}
                 onClick={() => setIsMenuOpen(false)}
                 className={`block px-3 py-2 text-base font-medium transition-colors ${
                   isActive(item.path)
@@ -136,14 +139,14 @@ const Header = () => {
             ) : (
               <>
                 <Link
-                  to="/login"
+                  href="/login"
                   onClick={() => setIsMenuOpen(false)}
                   className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
-                  to="/signup"
+                  href="/signup"
                   onClick={() => setIsMenuOpen(false)}
                   className="block w-full text-center bg-blue-600 text-white px-3 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors mt-4"
                 >

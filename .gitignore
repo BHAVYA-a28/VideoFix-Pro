@@ -1,3 +1,19 @@
+# Dependencies
+node_modules
+/node_modules_old
+
+# Next.js Build Output
+.next/
+out/
+
+# Production / Electron Build Output
+dist/
+dist-ssr/
+release/
+*.exe
+*.dmg
+*.AppImage
+
 # Logs
 logs
 *.log
@@ -7,12 +23,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Editor directories and files
+# TypeScript Cache
+*.tsbuildinfo
+.eslintcache
+
+# Editor configurations
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,4 +44,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env

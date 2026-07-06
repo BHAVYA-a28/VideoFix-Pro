@@ -134,34 +134,34 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
         <div className="p-6">
           {/* System Specifications — REAL data */}
           {systemInfo && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
               <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <Monitor className="w-6 h-6 text-blue-500" />
-                  <div className="min-w-0">
+                <div className="flex items-start space-x-3">
+                  <Monitor className="w-6 h-6 text-blue-500 shrink-0 mt-0.5" />
+                  <div>
                     <p className="text-xs font-medium text-gray-500">OS</p>
-                    <p className="text-sm font-semibold text-gray-900 truncate" title={systemInfo.os}>{systemInfo.os}</p>
+                    <p className="text-sm font-semibold text-gray-900 break-words" title={systemInfo.os}>{systemInfo.os}</p>
                     <p className="text-xs text-gray-500">{systemInfo.architecture}</p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <Database className="w-6 h-6 text-green-500" />
+                <div className="flex items-start space-x-3">
+                  <Database className="w-6 h-6 text-green-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs font-medium text-gray-500">RAM</p>
-                    <p className="text-sm font-semibold text-gray-900">{systemInfo.totalMemory}</p>
+                    <p className="text-sm font-semibold text-gray-900 break-words">{systemInfo.totalMemory}</p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <HardDrive className="w-6 h-6 text-purple-500" />
-                  <div className="min-w-0">
+                <div className="flex items-start space-x-3">
+                  <HardDrive className="w-6 h-6 text-purple-500 shrink-0 mt-0.5" />
+                  <div>
                     <p className="text-xs font-medium text-gray-500">Storage</p>
-                    <p className="text-sm font-semibold text-gray-900 truncate" title={systemInfo.storage.total}>{systemInfo.storage.total}</p>
+                    <p className="text-sm font-semibold text-gray-900 break-words" title={systemInfo.storage.total}>{systemInfo.storage.total}</p>
                     {systemInfo.storage.usagePercent > 0 && (
                       <p className="text-xs text-gray-500">{systemInfo.storage.usagePercent}% used</p>
                     )}
@@ -170,21 +170,21 @@ const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({ isOpen,
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <Zap className="w-6 h-6 text-yellow-500" />
-                  <div className="min-w-0">
+                <div className="flex items-start space-x-3">
+                  <Zap className="w-6 h-6 text-yellow-500 shrink-0 mt-0.5" />
+                  <div>
                     <p className="text-xs font-medium text-gray-500">GPU</p>
-                    <p className="text-sm font-semibold text-gray-900 truncate" title={systemInfo.gpu}>{systemInfo.gpu}</p>
+                    <p className="text-sm font-semibold text-gray-900 break-words" title={systemInfo.gpu}>{systemInfo.gpu}</p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <Cpu className="w-6 h-6 text-red-500" />
-                  <div className="min-w-0">
+                <div className="flex items-start space-x-3">
+                  <Cpu className="w-6 h-6 text-red-500 shrink-0 mt-0.5" />
+                  <div>
                     <p className="text-xs font-medium text-gray-500">CPU</p>
-                    <p className="text-sm font-semibold text-gray-900 truncate" title={systemInfo.cpu}>{systemInfo.cpu}</p>
+                    <p className="text-sm font-semibold text-gray-900 break-words" title={systemInfo.cpu}>{systemInfo.cpu}</p>
                   </div>
                 </div>
               </div>

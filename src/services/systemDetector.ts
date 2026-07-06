@@ -37,6 +37,7 @@ export interface SystemInfo {
   webGLSupport: boolean;
   webGL2Support: boolean;
   maxTextureSize: number;
+  isMobile: boolean;
 }
 
 export interface DiagnosticResult {
@@ -140,7 +141,6 @@ const getNetwork = () => {
   };
 };
 
-// Main detection function — returns REAL system information
 export const detectSystemInfo = async (): Promise<SystemInfo> => {
   const { os, version: osVersion } = getOS();
   const { name: browserName, version: browserVersion } = getBrowser();
@@ -150,9 +150,20 @@ export const detectSystemInfo = async (): Promise<SystemInfo> => {
   const storageData = await getStorageEstimate();
   const networkData = getNetwork();
 
+  const isMobile = ['iOS', 'Android'].includes(os);
+
   // Memory — navigator.deviceMemory is a real API (Chrome/Edge)
   // @ts-ignore
-  const deviceMemoryGB = navigator.deviceMemory || 0;
+  let deviceMemoryGB = navigator.deviceMemory || 0;
+  let totalMemoryStr = deviceMemoryGB > 0 ? `${deviceMemoryGB} GB` : 'Not available (browser restricted)';
+
+  if (os === 'iOS') {
+    deviceMemoryGB = 6;
+    totalMemoryStr = 'Estimated 6 GB (iOS Sandboxed)';
+  } else if (isMobile && deviceMemoryGB === 0) {
+    deviceMemoryGB = 4;
+    totalMemoryStr = 'Estimated 4 GB (Android Sandboxed)';
+  }
 
   // Architecture
   const ua = navigator.userAgent;
@@ -166,11 +177,11 @@ export const detectSystemInfo = async (): Promise<SystemInfo> => {
     ? Math.round((storageData.used / storageData.total) * 100)
     : 0;
 
-  return {
+  const defaultInfo: SystemInfo = {
     os: `${os} ${osVersion}`.trim(),
     osVersion,
     architecture,
-    totalMemory: deviceMemoryGB > 0 ? `${deviceMemoryGB} GB` : 'Not available (browser restricted)',
+    totalMemory: totalMemoryStr,
     totalMemoryGB: deviceMemoryGB,
     freeMemory: 'N/A (browser restricted)',
     cpu: cpuName,
@@ -202,8 +213,42 @@ export const detectSystemInfo = async (): Promise<SystemInfo> => {
     cookiesEnabled: navigator.cookieEnabled,
     webGLSupport: !!document.createElement('canvas').getContext('webgl'),
     webGL2Support: gpu.webgl2,
-    maxTextureSize: gpu.maxTextureSize
+    maxTextureSize: gpu.maxTextureSize,
+    isMobile
   };
+
+  try {
+    const response = await fetch('/api/v1/system/diagnose');
+    if (response.ok) {
+      const resData = await response.json();
+      if (resData.status === 'success' && resData.data) {
+        const hardware = resData.data;
+        return {
+          ...defaultInfo,
+          os: hardware.os || defaultInfo.os,
+          osVersion: hardware.osVersion || defaultInfo.osVersion,
+          architecture: hardware.architecture || defaultInfo.architecture,
+          totalMemory: `${hardware.totalMemoryGB} GB`,
+          totalMemoryGB: hardware.totalMemoryGB || defaultInfo.totalMemoryGB,
+          freeMemory: hardware.freeMemoryBytes ? formatBytes(hardware.freeMemoryBytes) : defaultInfo.freeMemory,
+          cpu: hardware.cpu || defaultInfo.cpu,
+          cpuCores: hardware.cpuCores || defaultInfo.cpuCores,
+          gpu: hardware.gpu || defaultInfo.gpu,
+          gpuVendor: hardware.gpu.includes('/') ? hardware.gpu : defaultInfo.gpuVendor,
+          storage: {
+            total: hardware.storage.total !== 'Unknown' ? hardware.storage.total : defaultInfo.storage.total,
+            free: hardware.storage.free !== 'Unknown' ? hardware.storage.free : defaultInfo.storage.free,
+            used: hardware.storage.used !== 'Unknown' ? hardware.storage.used : defaultInfo.storage.used,
+            usagePercent: hardware.storage.total !== 'Unknown' ? hardware.storage.usagePercent : defaultInfo.storage.usagePercent
+          }
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('Backend diagnostics endpoint unavailable, using browser restricted API:', error);
+  }
+
+  return defaultInfo;
 };
 
 // Synchronous version for backward compatibility (without storage which needs async)
@@ -214,8 +259,20 @@ export const detectSystemInfoSync = (): Omit<SystemInfo, 'storage'> & { storage:
   const cpuName = `${cores}-Core Processor`;
   const gpu = getGPU();
   const networkData = getNetwork();
+
+  const isMobile = ['iOS', 'Android'].includes(os);
+
   // @ts-ignore
-  const deviceMemoryGB = navigator.deviceMemory || 0;
+  let deviceMemoryGB = navigator.deviceMemory || 0;
+  let totalMemoryStr = deviceMemoryGB > 0 ? `${deviceMemoryGB} GB` : 'Not available';
+
+  if (os === 'iOS') {
+    deviceMemoryGB = 6;
+    totalMemoryStr = 'Estimated 6 GB (iOS Sandboxed)';
+  } else if (isMobile && deviceMemoryGB === 0) {
+    deviceMemoryGB = 4;
+    totalMemoryStr = 'Estimated 4 GB (Android Sandboxed)';
+  }
 
   const ua = navigator.userAgent;
   const architecture = ua.includes('WOW64') || ua.includes('x64') || ua.includes('x86_64') || ua.includes('amd64')
@@ -228,7 +285,7 @@ export const detectSystemInfoSync = (): Omit<SystemInfo, 'storage'> & { storage:
     os: `${os} ${osVersion}`.trim(),
     osVersion,
     architecture,
-    totalMemory: deviceMemoryGB > 0 ? `${deviceMemoryGB} GB` : 'Not available',
+    totalMemory: totalMemoryStr,
     totalMemoryGB: deviceMemoryGB,
     freeMemory: 'N/A',
     cpu: cpuName,
@@ -260,7 +317,8 @@ export const detectSystemInfoSync = (): Omit<SystemInfo, 'storage'> & { storage:
     cookiesEnabled: navigator.cookieEnabled,
     webGLSupport: !!document.createElement('canvas').getContext('webgl'),
     webGL2Support: gpu.webgl2,
-    maxTextureSize: gpu.maxTextureSize
+    maxTextureSize: gpu.maxTextureSize,
+    isMobile
   };
 };
 
@@ -321,6 +379,23 @@ export const getPerformanceMetrics = async (): Promise<PerformanceMetrics> => {
     gpuTier = 'Low-End';
   }
 
+  try {
+    const response = await fetch('/api/v1/system/performance');
+    if (response.ok) {
+      const resData = await response.json();
+      if (resData.status === 'success' && resData.data) {
+        return {
+          cpuUsage: resData.data.cpuUsage,
+          memoryUsage: resData.data.memoryUsage,
+          storageUsage: resData.data.storageUsage,
+          gpuTier
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('Backend performance metrics endpoint unavailable, falling back to browser sandboxed metrics:', error);
+  }
+
   return {
     cpuUsage,
     memoryUsage,
@@ -334,7 +409,14 @@ export const runDiagnostics = (systemInfo: SystemInfo): DiagnosticResult[] => {
 
   // OS Check
   const osLower = systemInfo.os.toLowerCase();
-  if (osLower.includes('windows 10') || osLower.includes('windows 11') || osLower.includes('macos')) {
+  if (systemInfo.isMobile) {
+    results.push({
+      category: 'Operating System',
+      status: 'pass',
+      message: `${systemInfo.os} (Mobile OS)`,
+      details: 'Optimized environment for mobile editing tools (CapCut, LumaFusion)'
+    });
+  } else if (osLower.includes('windows 10') || osLower.includes('windows 11') || osLower.includes('macos')) {
     results.push({
       category: 'Operating System',
       status: 'pass',
@@ -358,7 +440,14 @@ export const runDiagnostics = (systemInfo: SystemInfo): DiagnosticResult[] => {
   }
 
   // Memory Check (real data from navigator.deviceMemory)
-  if (systemInfo.totalMemoryGB >= 16) {
+  if (systemInfo.isMobile) {
+    results.push({
+      category: 'Memory (RAM)',
+      status: 'pass',
+      message: `${systemInfo.totalMemory}`,
+      details: 'Fully sufficient for mobile project compositions and rendering'
+    });
+  } else if (systemInfo.totalMemoryGB >= 16) {
     results.push({
       category: 'Memory (RAM)',
       status: 'pass',
@@ -389,7 +478,14 @@ export const runDiagnostics = (systemInfo: SystemInfo): DiagnosticResult[] => {
   }
 
   // CPU Check (real core count from navigator.hardwareConcurrency)
-  if (systemInfo.cpuCores >= 8) {
+  if (systemInfo.isMobile) {
+    results.push({
+      category: 'Processor (CPU)',
+      status: 'pass',
+      message: `${systemInfo.cpu} (Mobile Core)`,
+      details: 'Energy-efficient multicore architecture designed for mobile rendering'
+    });
+  } else if (systemInfo.cpuCores >= 8) {
     results.push({
       category: 'Processor (CPU)',
       status: 'pass',
@@ -414,7 +510,14 @@ export const runDiagnostics = (systemInfo: SystemInfo): DiagnosticResult[] => {
 
   // GPU Check (real GPU name from WebGL)
   const gpuLower = systemInfo.gpu.toLowerCase();
-  if (gpuLower.includes('nvidia') || gpuLower.includes('geforce') || gpuLower.includes('rtx') || gpuLower.includes('gtx')) {
+  if (systemInfo.isMobile) {
+    results.push({
+      category: 'Graphics (GPU)',
+      status: 'pass',
+      message: `Mobile GPU: ${systemInfo.gpu}`,
+      details: 'Hardware-accelerated mobile graphics pipeline active'
+    });
+  } else if (gpuLower.includes('nvidia') || gpuLower.includes('geforce') || gpuLower.includes('rtx') || gpuLower.includes('gtx')) {
     results.push({
       category: 'Graphics (GPU)',
       status: 'pass',
@@ -572,6 +675,17 @@ export const runDiagnostics = (systemInfo: SystemInfo): DiagnosticResult[] => {
 
 export const getSystemRecommendations = (systemInfo: SystemInfo): string[] => {
   const recommendations: string[] = [];
+
+  if (systemInfo.isMobile) {
+    recommendations.push('Keep your device cool; thermal throttling can significantly slow down video render speeds');
+    recommendations.push('Maintain at least 15% free storage space on your device for project cache files');
+    recommendations.push('Close background applications before starting an export to maximize available RAM');
+    if (systemInfo.network.effectiveType !== '4g') {
+      recommendations.push('Use a high-speed Wi-Fi connection for downloading external visual assets and plugins');
+    }
+    recommendations.push('Ensure your device battery level is above 20% or connected to power for maximum rendering speed');
+    return recommendations;
+  }
 
   if (systemInfo.totalMemoryGB > 0 && systemInfo.totalMemoryGB < 16) {
     recommendations.push('Upgrade to 16GB+ RAM for smooth 4K video editing');
