@@ -50,10 +50,18 @@ const COLORS = ['#3b82f6', '#22c55e', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899'
 
 const ProjectManager: React.FC = () => {
   const { user } = useAuth();
-  const [projects, setProjects] = useState<Project[]>(() => {
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
     const saved = localStorage.getItem('vfp_projects');
-    return saved ? JSON.parse(saved) : [];
-  });
+    if (saved) {
+      try {
+        setProjects(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'failed'>('synced');
   

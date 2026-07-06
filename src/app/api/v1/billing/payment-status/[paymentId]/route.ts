@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 
 export async function GET(
   request: Request,
-  { params }: { params: { paymentId: string } }
+  { params }: { params: Promise<{ paymentId: string }> }
 ) {
+  const { paymentId } = await params;
   return NextResponse.json({
     status: 'captured',
-    paymentId: params.paymentId,
+    paymentId,
     amount: 299900,
     currency: 'INR'
   });

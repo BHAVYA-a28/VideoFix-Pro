@@ -38,10 +38,18 @@ const SystemDiagnostics: React.FC = () => {
   const [scanTask, setScanTask] = useState('');
   const [lastScanTime, setLastScanTime] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'diagnostics' | 'hardware' | 'recommendations'>('overview');
-  const [scanHistory, setScanHistory] = useState<{ date: string; passCount: number; warnCount: number; failCount: number }[]>(() => {
+  const [scanHistory, setScanHistory] = useState<{ date: string; passCount: number; warnCount: number; failCount: number }[]>([]);
+
+  useEffect(() => {
     const saved = localStorage.getItem('vfp_scan_history');
-    return saved ? JSON.parse(saved) : [];
-  });
+    if (saved) {
+      try {
+        setScanHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
 
   const runFullScan = async () => {
     setIsScanning(true);

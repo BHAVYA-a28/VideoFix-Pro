@@ -13,8 +13,8 @@ export const getNativeSystemInfo = async (): Promise<NativeSystemInfo> => {
   // Leverage our robust systemDetector
   const system = await detectSystemInfo();
   
-  let nativeData = null;
-  let softwareData = null;
+  let nativeData: any = null;
+  let softwareData: any = null;
 
   // @ts-ignore
   if (window.require && window.require('electron')) {

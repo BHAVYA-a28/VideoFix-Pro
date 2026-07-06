@@ -201,7 +201,7 @@ const Dashboard = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [navigate, quickActions]);
+  }, [router, quickActions]);
 
   // REAL system info — starts with empty, filled by detection
   const [systemInfo, setSystemInfo] = useState<SystemInfo>({
@@ -351,55 +351,64 @@ const Dashboard = () => {
   }, []);
 
   // Project stats persisted in localStorage
-  const [projectStats, setProjectStats] = useState<ProjectStats>(() => {
-    const saved = localStorage.getItem('vfp_project_stats');
-    return saved ? JSON.parse(saved) : {
-      totalProjects: 12,
-      activeProjects: 3,
-      completedProjects: 9,
-      totalHours: 142,
-      totalExports: 28,
-      totalImports: 156
-    };
+  const [projectStats, setProjectStats] = useState<ProjectStats>({
+    totalProjects: 12,
+    activeProjects: 3,
+    completedProjects: 9,
+    totalHours: 142,
+    totalExports: 28,
+    totalImports: 156
   });
 
   // Media library stats persisted in localStorage
-  const [mediaLibrary, setMediaLibrary] = useState<MediaLibrary>(() => {
-    const saved = localStorage.getItem('vfp_media_library');
-    return saved ? JSON.parse(saved) : {
-      videos: 8,
-      images: 42,
-      audio: 12,
-      totalSize: '4.2 GB',
-      lastBackup: 'Recent'
-    };
+  const [mediaLibrary, setMediaLibrary] = useState<MediaLibrary>({
+    videos: 8,
+    images: 42,
+    audio: 12,
+    totalSize: '4.2 GB',
+    lastBackup: 'Recent'
   });
 
   // Recent activities from localStorage
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(() => {
-    const saved = localStorage.getItem('vfp_recent_activities');
-    if (saved) {
-      try { return JSON.parse(saved); } catch { /* fall through */ }
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([
+    {
+      id: 'welcome',
+      type: 'update' as const,
+      title: 'VideoFix Pro Initialized',
+      description: 'System scanning and management services are now active.',
+      timestamp: new Date().toLocaleString(),
+      status: 'completed' as const,
+      progress: 100
     }
-    return [
-      {
-        id: 'welcome',
-        type: 'update' as const,
-        title: 'VideoFix Pro Initialized',
-        description: 'System scanning and management services are now active.',
-        timestamp: new Date().toLocaleString(),
-        status: 'completed' as const,
-        progress: 100
-      }
-    ];
-  });
+  ]);
 
-  // Synchronize dashboard and persist updates
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  // Load stats from localStorage on mount
   useEffect(() => {
-    localStorage.setItem('vfp_project_stats', JSON.stringify(projectStats));
-    localStorage.setItem('vfp_media_library', JSON.stringify(mediaLibrary));
-    localStorage.setItem('vfp_recent_activities', JSON.stringify(recentActivities));
-  }, [projectStats, mediaLibrary, recentActivities]);
+    const savedStats = localStorage.getItem('vfp_project_stats');
+    if (savedStats) {
+      try { setProjectStats(JSON.parse(savedStats)); } catch (e) {}
+    }
+    const savedMedia = localStorage.getItem('vfp_media_library');
+    if (savedMedia) {
+      try { setMediaLibrary(JSON.parse(savedMedia)); } catch (e) {}
+    }
+    const savedActivities = localStorage.getItem('vfp_recent_activities');
+    if (savedActivities) {
+      try { setRecentActivities(JSON.parse(savedActivities)); } catch (e) {}
+    }
+    setHasLoaded(true);
+  }, []);
+
+  // Synchronize dashboard and persist updates (only after initial load)
+  useEffect(() => {
+    if (hasLoaded) {
+      localStorage.setItem('vfp_project_stats', JSON.stringify(projectStats));
+      localStorage.setItem('vfp_media_library', JSON.stringify(mediaLibrary));
+      localStorage.setItem('vfp_recent_activities', JSON.stringify(recentActivities));
+    }
+  }, [projectStats, mediaLibrary, recentActivities, hasLoaded]);
 
   // Sync from storage events (for activities updated by other pages)
   useEffect(() => {

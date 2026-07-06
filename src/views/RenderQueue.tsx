@@ -41,10 +41,18 @@ const CODECS = ['H.264', 'H.265 (HEVC)', 'VP9', 'AV1', 'ProRes 422', 'DNxHR HQ']
 const QUALITIES = ['Low (Fast)', 'Medium', 'High', 'Ultra (Slow)', 'Lossless'];
 
 const RenderQueue: React.FC = () => {
-  const [jobs, setJobs] = useState<RenderJob[]>(() => {
+  const [jobs, setJobs] = useState<RenderJob[]>([]);
+
+  useEffect(() => {
     const saved = localStorage.getItem('vfp_render_jobs');
-    return saved ? JSON.parse(saved) : [];
-  });
+    if (saved) {
+      try {
+        setJobs(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
   const [showNewJob, setShowNewJob] = useState(false);
   const [newJob, setNewJob] = useState({
     name: '',

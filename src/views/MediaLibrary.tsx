@@ -42,19 +42,33 @@ interface Folder {
 const FOLDER_COLORS = ['#3b82f6', '#22c55e', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
 
 const MediaLibrary: React.FC = () => {
-  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>(() => {
-    const saved = localStorage.getItem('vfp_media_files');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [folders, setFolders] = useState<Folder[]>(() => {
-    const saved = localStorage.getItem('vfp_media_folders');
-    return saved ? JSON.parse(saved) : [
-      { id: 'all', name: 'All Files', color: '#6b7280' },
-      { id: 'footage', name: 'Footage', color: '#3b82f6' },
-      { id: 'music', name: 'Music', color: '#8b5cf6' },
-      { id: 'graphics', name: 'Graphics', color: '#22c55e' }
-    ];
-  });
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([
+    { id: 'all', name: 'All Files', color: '#6b7280' },
+    { id: 'footage', name: 'Footage', color: '#3b82f6' },
+    { id: 'music', name: 'Music', color: '#8b5cf6' },
+    { id: 'graphics', name: 'Graphics', color: '#22c55e' }
+  ]);
+
+  useEffect(() => {
+    const savedFiles = localStorage.getItem('vfp_media_files');
+    if (savedFiles) {
+      try {
+        setMediaFiles(JSON.parse(savedFiles));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const savedFolders = localStorage.getItem('vfp_media_folders');
+    if (savedFolders) {
+      try {
+        setFolders(JSON.parse(savedFolders));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedFolder, setSelectedFolder] = useState('all');

@@ -54,7 +54,7 @@ const RAZORPAY_CONFIG = {
 // Initialize Razorpay
 export const loadRazorpay = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    if (window.Razorpay) {
+    if ((window as any).Razorpay) {
       resolve();
       return;
     }
@@ -148,7 +148,7 @@ export const initializePayment = async (
     };
 
     // Initialize Razorpay
-    const rzp = new window.Razorpay(options);
+    const rzp = new (window as any).Razorpay(options);
     rzp.open();
 
   } catch (error) {
